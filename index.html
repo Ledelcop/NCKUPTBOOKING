@@ -476,6 +476,28 @@ async function submitBooking(){
   if(recipients.some(r=>r.parts.length===0)){showToast('請為每位被傳情人選擇至少一個部位');return;}
   if(!selTh){showToast('請選擇治療師');return;}
   if(!selSlot){showToast('請選擇時段');return;}
+
+  // ── 防衝突：送出前先拉最新資料確認時段仍空閒 ──────────────
+  showLo('確認時段是否仍空閒...');
+  try{
+    const latest=await apiFetch('getBookings');
+    if(latest?.bookings){
+      const fresh=parseBk(latest.bookings);
+      const conflict=fresh.some(b=>
+        b.bed===selTh.bed&&b.segment===selSeg&&b.dayIdx===selDay&&b.time===selSlot
+      );
+      if(conflict){
+        hideLo();
+        // 更新本地預約資料並重新渲染
+        bookings=fresh;
+        renderThGrid();renderSlots();
+        showToast('⚠️ 抱歉，此時段剛被其他人預約！已為你更新最新狀態，請重新選擇時段。',5000);
+        selSlot=null;
+        return;
+      }
+    }
+  }catch(e){/* 如果網路問題跳過衝突檢查，繼續送出 */}
+
   const notes=document.getElementById('notes').value;
   const dayLabel=DAYS[selDay];
   const segLabel=selSeg==='19-20'?'19:00—20:00（前段）':'20:00—21:00（後段）';
@@ -560,9 +582,25 @@ async function submitBooking(){
   }
 }
 
+// 靜默更新時段（不影響用戶正在填的資料）
+async function silentRefresh(){
+  if(!SCRIPT_URL||SCRIPT_URL==='在此貼上你的網址')return;
+  try{
+    const bRes=await apiFetch('getBookings');
+    if(bRes?.bookings){
+      bookings=parseBk(bRes.bookings);
+      // 只更新時段格，不動其他東西
+      if(selTh)renderSlots();
+      else renderThGrid();
+    }
+  }catch(e){}
+}
+
 loadData();
 addRecipient();
 renderThGrid();
+// 每 30 秒自動更新時段資料
+setInterval(silentRefresh, 30000);
 </script>
 </body>
 </html>
