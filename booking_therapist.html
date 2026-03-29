@@ -96,6 +96,12 @@ const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
 
 // ↓↓↓ 把你的 Apps Script 網址貼在這裡（只需填一次）↓↓↓
 let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrxTlaoBOVqh-EIJovrnqZL0UQ7wd-9ksaqewEGyVI7lWiwRuwCJEHkFFQZGSKPzFU6g/exec';
+// ↓↓↓ 必須與 Apps Script 裡的 SECRET_KEY 完全一致 ↓↓↓
+const SECRET_KEY = 'DCPT116';
+// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+function apiPost(d){return fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({...d,secret:SECRET_KEY})}).then(r=>r.json()).catch(()=>null);}
+function showToast(msg,dur=3500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
 // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 let schedule=[];  // schedule[dayIdx] = {bed: {seg: {name,gender}}}
@@ -205,19 +211,30 @@ function renderResult(name){
 
   entries.forEach(({dayIdx,bed,segment})=>{
     const slots=SLOTS_BY_SEG[segment]||[];
-    // 預約用 therapistName + bed + segment + dayIdx 查
     const segBk=bookings.filter(b=>b.therapistName===name&&b.bed===bed&&b.segment===segment&&b.dayIdx===dayIdx);
+    // 全部時段（跨段）供續時查詢下一格用
+    const allDayBk=bookings.filter(b=>b.therapistName===name&&b.bed===bed&&b.dayIdx===dayIdx);
 
-    const slotsHtml=slots.map(s=>{
+    const slotsHtml=slots.map((s,si)=>{
       const bk=segBk.find(b=>b.time===s);
       if(bk){
+        // 下一個時段
+        const nextSlot=ALL_SLOTS[ALL_SLOTS.indexOf(s)+1]||null;
+        const nextFree=nextSlot&&!allDayBk.find(b=>b.time===nextSlot);
+        // 下一個時段的段落
+        const nextSeg=nextSlot&&(ALL_SLOTS.indexOf(nextSlot)<5?'19-20':'20-21');
         return`<div class="slot-row">
           <div class="slot-label">${s}</div>
           <div class="slot-booked">
-            <div class="slot-recipient">${bk.recipient}</div>
-            <div class="slot-parts">${bk.parts.map(p=>`<span style="background:rgba(192,57,43,0.1);color:#922B21;padding:2px 7px;border-radius:7px;font-size:11px;margin-right:3px;">${p}</span>`).join('')}</div>
-            <div class="slot-meta">傳情人：${bk.booker} · NT$${bk.amount} · <span style="color:${bk.payment==='paid'?'var(--green-soft)':'var(--red-soft)'}">${bk.payment==='paid'?'已繳費':'未繳費'}</span></div>
-            ${bk.notes&&bk.notes!=='【現場報名】'?`<div class="slot-meta">備注：${bk.notes}</div>`:''}
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+              <div style="flex:1;">
+                <div class="slot-recipient">${bk.recipient}</div>
+                <div class="slot-parts">${bk.parts.map(p=>`<span style="background:rgba(192,57,43,0.1);color:#922B21;padding:2px 7px;border-radius:7px;font-size:11px;margin-right:3px;">${p}</span>`).join('')}</div>
+                <div class="slot-meta">傳情人：${bk.booker} · NT$${bk.amount} · <span style="color:${bk.payment==='paid'?'var(--green-soft)':'var(--red-soft)'}">${bk.payment==='paid'?'已繳費':'未繳費'}</span></div>
+                ${bk.notes&&bk.notes!=='【現場報名】'?`<div class="slot-meta">備注：${bk.notes}</div>`:''}
+              </div>
+              ${nextSlot?`<button onclick="addExtension('${bk.id}','${nextSlot}','${nextSeg}',${dayIdx},'${bed}')" style="flex-shrink:0;padding:5px 10px;border-radius:6px;font-size:11px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;border:1px solid;white-space:nowrap;transition:all 0.2s;${nextFree?'background:var(--green-pale);color:#1A6B3A;border-color:rgba(39,174,96,0.4);':'background:var(--red-pale);color:#922B21;border-color:rgba(192,57,43,0.3);cursor:not-allowed;'}">＋ 續時<div style="font-size:9px;margin-top:1px;">${nextSlot}</div></button>`:''}
+            </div>
           </div>
         </div>`;
       }
@@ -239,19 +256,63 @@ function renderResult(name){
   area.innerHTML=html;
 }
 
+// ── 續時功能 ─────────────────────────────────────────────────
+async function addExtension(origId, nextSlot, nextSeg, dayIdx, bed){
+  // 再次確認下一格是否仍空閒
+  const latest=await fetch(`${SCRIPT_URL}?action=getBookings`).then(r=>r.json()).catch(()=>null);
+  if(latest?.bookings){
+    const fresh=latest.bookings.map(b=>({
+      bed:(b['床位']||''), segment:(b['時段區間']||''),
+      dayIdx:parseInt(b['日期索引'])||0, time:(b['時段']||''),
+      therapistName:(b['治療師名稱']||'')
+    }));
+    const conflict=fresh.some(b=>b.bed===bed&&b.segment===nextSeg&&b.dayIdx===dayIdx&&b.time===nextSlot&&b.therapistName===currentName);
+    if(conflict){
+      showToast('此時段已被預約，無法續時');
+      bookings=latest.bookings.map?.[Symbol.iterator]?latest.bookings:bookings;
+      renderResult(currentName);
+      return;
+    }
+  }
+
+  // 找原始預約資料
+  const orig=bookings.find(b=>b.id===origId);
+  if(!orig){showToast('找不到原始預約');return;}
+
+  if(!confirm(`確認為「${orig.recipient}」在 ${nextSlot} 續時？\n費用將額外加 NT$${orig.amount}。`))return;
+
+  showToast('正在新增續時預約...');
+  const bk={
+    booker:orig.booker, bookerPhone:orig.bookerPhone||'', bookerFb:orig.bookerFb||'',
+    recipient:orig.recipient, recipientFb:orig.recipientFb||'',
+    parts:orig.parts, therapistName:orig.therapistName, therapistGender:orig.therapistGender||'',
+    bed:bed, segment:nextSeg, dayIdx:dayIdx, time:nextSlot,
+    amount:orig.amount, checkin:false, payment:'unpaid', type:'walkin',
+    contactMethod:orig.contactMethod||'fb', contactAccount:orig.contactAccount||'',
+    notified:false, notes:'【續時】原預約 '+origId
+  };
+  const res=await apiPost({action:'addBooking',booking:bk});
+  if(res?.success||res?.id){
+    bookings.push({...bk,id:res?.id||('EXT'+Date.now())});
+    showToast(`續時成功！${orig.recipient} · ${nextSlot}`);
+    renderResult(currentName);
+  }else{
+    showToast('續時失敗，請重試');
+  }
+}
+
 // 靜默更新（不顯示 loading，避免干擾）
 async function silentRefresh(){
+  const url=SCRIPT_URL||'';
+  if(!url||url==='在此貼上你的網址')return;
   try{
-    const[bRes,tRes]=await Promise.all([
-      fetch(`${SCRIPT_URL}?action=getBookings`).then(r=>r.json()),
-      fetch(`${SCRIPT_URL}?action=getTherapists`).then(r=>r.json())
-    ]);
-    if(bRes?.bookings)bookings=parseBk(bRes.bookings);
-    if(tRes?.schedule)schedule=tRes.schedule;
-    if(currentName)renderResult(currentName);
-    // 更新倒數計時器顯示
+    const bRes=await fetch(`${url}?action=getBookings`).then(r=>r.json());
+    if(bRes?.bookings){
+      bookings=parseBk(bRes.bookings);
+      if(currentName)renderResult(currentName);
+    }
     countdown=30;
-  }catch(e){}
+  }catch(e){console.warn('自動更新失敗',e);}
 }
 
 let countdown=30;
