@@ -133,10 +133,9 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
   <div style="background:var(--white);border-radius:16px;padding:36px 40px;text-align:center;width:320px;box-shadow:var(--shadow-md);">
     <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--ink);margin-bottom:4px;letter-spacing:0.04em;">後台管理</div>
     <div style="font-size:12px;color:var(--stone);margin-bottom:24px;letter-spacing:0.06em;">筋夾！？皮洽鬆？</div>
-    <input type="password" id="login-input" maxlength="6"
-      placeholder="請輸入 6 位密碼"
+    <input type="password" id="login-input" maxlength="20"
+      placeholder="請輸入密碼"
       style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:13px;font-size:20px;text-align:center;letter-spacing:0.4em;font-family:'Noto Sans TC',sans-serif;background:var(--cream);outline:none;margin-bottom:14px;"
-      oninput="if(this.value.length===6)checkLogin()"
       onkeydown="if(event.key==='Enter')checkLogin()">
     <div id="login-err" style="font-size:12px;color:var(--red-soft);margin-bottom:12px;min-height:18px;"></div>
     <button onclick="checkLogin()" style="width:100%;background:var(--ink);color:var(--gold-light);border:1px solid var(--gold);padding:12px;border-radius:8px;font-size:14px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;font-weight:500;">進入後台</button>
@@ -298,17 +297,17 @@ function buildSlots(){const s=[];let h=19,m=0;for(let i=0;i<10;i++){const st=`${
 const ALL_SLOTS=buildSlots();
 const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
 // ↓↓↓ 後台登入密碼（6碼，可自行修改）↓↓↓
-const ADMIN_PASSWORD = 'NCKUPT';
+const ADMIN_PASSWORD = '請改成6碼密碼';
 // ↓↓↓ 必須與 Apps Script 裡的 SECRET_KEY 完全一致 ↓↓↓
-const SECRET_KEY = 'DCPT116';
+const SECRET_KEY = '請改成你自己的密鑰abc123';
 // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 function checkLogin(){
-  const v=document.getElementById('login-input').value;
-  if(v===ADMIN_PASSWORD){
+  const v=document.getElementById('login-input').value.trim();
+  if(v===String(ADMIN_PASSWORD)){
     document.getElementById('login-overlay').style.display='none';
     sessionStorage.setItem('adminAuth','1');
-  }else if(v.length===6){
+  }else if(v.length>=1){
     document.getElementById('login-err').textContent='密碼錯誤，請重試';
     document.getElementById('login-input').value='';
     document.getElementById('login-input').focus();
@@ -321,7 +320,7 @@ if(sessionStorage.getItem('adminAuth')==='1'){
 }
 
 // ↓↓↓ 把你的 Apps Script 網址貼在這裡可以省去每次輸入（選填）↓↓↓
-let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrxTlaoBOVqh-EIJovrnqZL0UQ7wd-9ksaqewEGyVI7lWiwRuwCJEHkFFQZGSKPzFU6g/exec';
+let SCRIPT_URL = '';
 // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 // schedule[dayIdx] = {bed: {segment: {name, gender}}}
