@@ -65,6 +65,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--i
   <span class="brand-en">筋夾！？皮洽鬆？ · 治療師系統</span>
   <div style="display:flex;align-items:center;gap:12px;">
     <span class="live-indicator"><span class="live-dot"></span>即時更新</span>
+    <span style="font-size:11px;color:var(--stone-light);">(<span id="refresh-countdown">30</span> 後自動更新)</span>
     <button onclick="loadData()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(184,149,90,0.4);color:var(--gold-light);padding:6px 14px;border-radius:7px;font-size:12px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">重新整理</button>
   </div>
 </nav>
@@ -238,8 +239,35 @@ function renderResult(name){
   area.innerHTML=html;
 }
 
-if(SCRIPT_URL&&SCRIPT_URL!=='在此貼上你的網址'){loadData();}
-else{document.getElementById('search-hint').textContent='請先在程式碼中填入 Apps Script 網址';}
+// 靜默更新（不顯示 loading，避免干擾）
+async function silentRefresh(){
+  try{
+    const[bRes,tRes]=await Promise.all([
+      fetch(`${SCRIPT_URL}?action=getBookings`).then(r=>r.json()),
+      fetch(`${SCRIPT_URL}?action=getTherapists`).then(r=>r.json())
+    ]);
+    if(bRes?.bookings)bookings=parseBk(bRes.bookings);
+    if(tRes?.schedule)schedule=tRes.schedule;
+    if(currentName)renderResult(currentName);
+    // 更新倒數計時器顯示
+    countdown=30;
+  }catch(e){}
+}
+
+let countdown=30;
+function updateCountdown(){
+  countdown--;
+  const el=document.getElementById('refresh-countdown');
+  if(el)el.textContent=countdown+'s';
+  if(countdown<=0){countdown=30;silentRefresh();}
+}
+
+if(SCRIPT_URL&&SCRIPT_URL!=='在此貼上你的網址'){
+  loadData();
+  setInterval(updateCountdown,1000);
+}else{
+  document.getElementById('search-hint').textContent='請先在程式碼中填入 Apps Script 網址';
+}
 </script>
 </body>
 </html>
