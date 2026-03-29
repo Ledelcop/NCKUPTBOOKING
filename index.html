@@ -41,8 +41,9 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 .part-btn{padding:7px 15px;border:1.5px solid var(--border);border-radius:20px;font-size:13px;color:var(--stone);cursor:pointer;transition:all 0.2s;background:var(--cream);user-select:none;}
 .part-btn:hover{border-color:var(--gold-light);}
 .part-btn.selected{border-color:var(--gold);background:var(--gold-pale);color:var(--ink-soft);font-weight:500;}
-.day-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:18px;}
-.day-tab{padding:10px 16px;font-size:13px;cursor:pointer;color:var(--stone);border-bottom:2px solid transparent;transition:all 0.2s;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;}
+.day-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.day-tabs::-webkit-scrollbar{display:none;}
+.day-tab{padding:10px 14px;font-size:13px;cursor:pointer;color:var(--stone);border-bottom:2px solid transparent;transition:all 0.2s;font-family:'Noto Sans TC',sans-serif;white-space:nowrap;flex-shrink:0;}
 .day-tab:hover{color:var(--ink);}
 .day-tab.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:500;}
 /* 時段選擇按鈕 */
@@ -114,7 +115,17 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 @keyframes spin{to{transform:rotate(360deg)}}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:13px 24px;font-size:13px;z-index:9999;transition:transform 0.4s cubic-bezier(0.23,1,0.32,1);text-align:center;max-width:500px;box-shadow:var(--shadow-md);}
 .toast.show{transform:translateX(-50%) translateY(0);}
-@media(max-width:680px){.info-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.contact-opts{grid-template-columns:1fr}.segment-group{flex-direction:column}}
+@media(max-width:680px){
+  .info-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .contact-opts{grid-template-columns:1fr}
+  .segment-group{flex-direction:column}
+  .page{padding:16px 14px}
+  .card{padding:16px 14px}
+  .therapist-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+  .slot-row{grid-template-columns:95px 1fr}
+  .btn-primary{width:100%;text-align:center}
+}
 </style>
 </head>
 <body>
