@@ -110,7 +110,12 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 @keyframes spin{to{transform:rotate(360deg)}}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:12px 22px;font-size:13px;z-index:9999;transition:transform 0.4s cubic-bezier(0.23,1,0.32,1);text-align:center;}
 .toast.show{transform:translateX(-50%) translateY(0);}
-@media(max-width:768px){.stats-row{grid-template-columns:1fr 1fr}.walkin-layout{grid-template-columns:1fr}.page{padding:16px}}
+@media(max-width:1024px){.walkin-layout{grid-template-columns:1fr}}
+@media(max-width:768px){.stats-row{grid-template-columns:1fr 1fr}.page{padding:16px}.walkin-layout{grid-template-columns:1fr}}
+@media(max-width:480px){.stats-row{grid-template-columns:1fr 1fr}.page{padding:12px}.schedule-grid{min-width:0!important}.sg-time{font-size:9px;padding-right:4px}.sg-cell{font-size:10px;padding:3px 1px}.sg-header{font-size:10px}.data-table{font-size:11px}.data-table th,.data-table td{padding:6px 6px}}
+/* 排班表格響應式 */
+.th-editor-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.th-editor-table-wrap table{min-width:500px;}
 </style>
 </head>
 <body>
@@ -259,7 +264,17 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
             <div class="form-group"><label class="required">治療師</label><select id="wi-therapist" onchange="renderWiSlots()"><option value="">— 請先選擇日期與時段 —</option></select></div>
             <div class="form-group">
               <label>聯絡方式</label>
-              <select id="wi-contact"><option value="fb">Facebook Messenger</option><option value="line">LINE</option><option value="manual">其他（人工傳訊）</option></select>
+              <div class="contact-opts" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;">
+                <div class="contact-opt selected" data-m="fb" onclick="setWiContact('fb',this)" style="border:1.5px solid var(--gold);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--gold-pale);">Facebook<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">Messenger</div></div>
+                <div class="contact-opt" data-m="line" onclick="setWiContact('line',this)" style="border:1.5px solid var(--border);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--cream);">LINE<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">人工傳送</div></div>
+                <div class="contact-opt" data-m="gmail" onclick="setWiContact('gmail',this)" style="border:1.5px solid var(--border);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--cream);">Gmail<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">人工傳送</div></div>
+              </div>
+              <div id="wi-account-line" style="display:none;margin-top:8px;">
+                <input type="text" id="wi-contact-account-line" placeholder="被傳情人 LINE ID">
+              </div>
+              <div id="wi-account-gmail" style="display:none;margin-top:8px;">
+                <input type="email" id="wi-contact-account-gmail" placeholder="被傳情人 Email">
+              </div>
             </div>
             <div class="form-group">
               <label>FB / IG 打卡折扣</label>
@@ -402,24 +417,24 @@ function renderStats(){
 function renderThEditor(){
   const grid=rawGrid.length?rawGrid:BEDS.flatMap(b=>SEGS.map(s=>({bed:b,segment:s,names:['','','','','']})));
   document.getElementById('th-editor').innerHTML=`
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:600px;">
+    <div class="th-editor-table-wrap">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead><tr>
-          <th style="padding:8px 10px;background:var(--cream);border-bottom:1px solid var(--border);font-size:11px;color:var(--stone);white-space:nowrap;">床位</th>
-          <th style="padding:8px 10px;background:var(--cream);border-bottom:1px solid var(--border);font-size:11px;color:var(--stone);white-space:nowrap;">時段</th>
-          ${DAYS.map(d=>`<th style="padding:8px 10px;background:var(--cream);border-bottom:1px solid var(--border);font-size:11px;color:var(--stone);text-align:center;white-space:nowrap;">${d}</th>`).join('')}
+          <th style="padding:8px 8px;background:var(--cream);border-bottom:1px solid var(--border);font-size:11px;color:var(--stone);white-space:nowrap;min-width:50px;">床位</th>
+          <th style="padding:8px 8px;background:var(--cream);border-bottom:1px solid var(--border);font-size:11px;color:var(--stone);white-space:nowrap;min-width:50px;">時段</th>
+          ${DAYS.map(d=>'<th style="padding:8px 6px;background:var(--cream);border-bottom:1px solid var(--border);font-size:11px;color:var(--stone);text-align:center;white-space:nowrap;min-width:90px;">'+d+'</th>').join('')}
         </tr></thead>
-        <tbody>${grid.map((row,ri)=>`<tr style="background:${Math.floor(ri/2)%2===0?'#FFF9F0':'#FFFFFF'}">
-          <td style="padding:6px 10px;font-weight:500;border-bottom:1px solid var(--border-light);">${row.bed} 床</td>
-          <td style="padding:6px 10px;font-size:12px;color:var(--stone);border-bottom:1px solid var(--border-light);white-space:nowrap;">${row.segment}</td>
-          ${DAYS.map((_,di)=>`<td style="padding:3px 5px;border-bottom:1px solid var(--border-light);">
-            <input type="text" value="${row.names[di]||''}" oninput="updateRawGrid(${ri},${di},this.value)"
-              placeholder="姓名（空=無人）"
-              style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:'Noto Sans TC',sans-serif;background:var(--cream);outline:none;min-width:80px;"
-              onfocus="this.style.borderColor='var(--gold)';this.style.background='var(--white)'"
-              onblur="this.style.borderColor='';this.style.background=''">
-          </td>`).join('')}
-        </tr>`).join('')}</tbody>
+        <tbody>${grid.map((row,ri)=>'<tr style="background:'+(Math.floor(ri/2)%2===0?'#FFF9F0':'#FFFFFF')+'">'+
+          '<td style="padding:6px 8px;font-weight:500;border-bottom:1px solid var(--border-light);white-space:nowrap;font-size:12px;">'+row.bed+' 床</td>'+
+          '<td style="padding:6px 8px;font-size:11px;color:var(--stone);border-bottom:1px solid var(--border-light);white-space:nowrap;">'+row.segment+'</td>'+
+          DAYS.map((_,di)=>'<td style="padding:3px 4px;border-bottom:1px solid var(--border-light);">'+
+            '<input type="text" value="'+(row.names[di]||'')+'" oninput="updateRawGrid('+ri+','+di+',this.value)"'+
+            ' placeholder="空=無人"'+
+            ' style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 6px;font-size:12px;font-family:\'Noto Sans TC\',sans-serif;background:var(--cream);outline:none;"'+
+            ' onfocus="this.style.borderColor=\'var(--gold)\';this.style.background=\'var(--white)\'"'+
+            ' onblur="this.style.borderColor=\'\';this.style.background=\'\'">'+
+          '</td>').join('')+
+        '</tr>').join('')}</tbody>
       </table>
     </div>`;
 }
@@ -533,6 +548,16 @@ function renderPayment(){
 // ── 現場報名 ──────────────────────────────────────────────────
 function selWiDay(idx,el){wiDay=idx;wiThBed=null;wiSlot=null;document.querySelectorAll('#wi-day-tabs .filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('wi-sel-display').textContent='';updateWiThOpts();renderWiSlots();}
 function selWiSeg(seg,el){wiSeg=seg;wiThBed=null;wiSlot=null;document.querySelectorAll('#wi-seg-toggle .toggle-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('wi-sel-display').textContent='';updateWiThOpts();renderWiSlots();}
+let wiContactMethod='fb';
+function setWiContact(m,el){
+  wiContactMethod=m;
+  document.querySelectorAll('[data-m]').forEach(o=>{
+    o.style.borderColor='var(--border)';o.style.background='var(--cream)';
+  });
+  el.style.borderColor='var(--gold)';el.style.background='var(--gold-pale)';
+  document.getElementById('wi-account-line').style.display=m==='line'?'block':'none';
+  document.getElementById('wi-account-gmail').style.display=m==='gmail'?'block':'none';
+}
 function updateWiThOpts(){
   const ths=getTHforDaySeg(wiDay,wiSeg);
   document.getElementById('wi-therapist').innerHTML='<option value="">— 請選擇治療師 —</option>'+ths.map(t=>'<option value="'+t.bed+'">'+t.bed+'床 · '+t.name+(t.gender?' ('+t.gender+')':'')+' </option>').join('');
@@ -567,7 +592,8 @@ function updateWiPrice(){
 async function submitWalkin(){
   const bn=document.getElementById('wi-booker').value.trim(),bp=document.getElementById('wi-phone').value.trim(),rn=document.getElementById('wi-recipient').value.trim();
   const parts=[...document.querySelectorAll('#wi-parts .part-btn.selected')].map(e=>e.textContent);
-  const cm=document.getElementById('wi-contact').value;
+  const cm=wiContactMethod||'fb';
+  const ca=cm==='line'?(document.getElementById('wi-contact-account-line').value.trim()):cm==='gmail'?(document.getElementById('wi-contact-account-gmail').value.trim()):'';
   if(!bn||!bp||!rn){showToast('請填寫傳情人與被傳情人姓名');return;}
   if(!parts.length){showToast('請選擇至少一個部位');return;}
   if(!wiThBed){showToast('請選擇治療師');return;}
@@ -579,7 +605,7 @@ async function submitWalkin(){
     parts,therapistName:todayTh?.name||'',therapistGender:todayTh?.gender||'',
     bed:wiThBed,segment:wiSeg,dayIdx:wiDay,time:wiSlot,
     amount:base,checkin:wiCk,payment:'unpaid',type:'walkin',
-    contactMethod:cm,notified:false,notes:'【現場報名】'};
+    contactMethod:cm,contactAccount:ca,notified:false,notes:'【現場報名】'};
   const res=await apiPost({action:'addBooking',booking:bk});
   bookings.push({...bk,id:res?.id||('L'+Date.now())});
   hideLo();
@@ -588,6 +614,15 @@ async function submitWalkin(){
   wiSlot=null;wiThBed=null;document.getElementById('wi-therapist').value='';
   document.getElementById('wi-slots').innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先選擇治療師</div>';
   document.getElementById('wi-sel-display').textContent='';document.getElementById('wi-price').textContent='';
+  document.getElementById('wi-contact-account-line').value='';
+  document.getElementById('wi-contact-account-gmail').value='';
+  document.getElementById('wi-account-line').style.display='none';
+  document.getElementById('wi-account-gmail').style.display='none';
+  // 重置聯絡方式回 FB
+  wiContactMethod='fb';
+  document.querySelectorAll('[data-m]').forEach(o=>{o.style.borderColor='var(--border)';o.style.background='var(--cream)';});
+  const fbOpt=document.querySelector('[data-m="fb"]');
+  if(fbOpt){fbOpt.style.borderColor='var(--gold)';fbOpt.style.background='var(--gold-pale)';}
   renderAll();
   showToast(`現場預約成功！${rn} · ${parts.join('、')} · NT$${base}`,4000);
 }
