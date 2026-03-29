@@ -114,8 +114,11 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 @media(max-width:768px){.stats-row{grid-template-columns:1fr 1fr}.page{padding:16px}.walkin-layout{grid-template-columns:1fr}}
 @media(max-width:480px){.stats-row{grid-template-columns:1fr 1fr}.page{padding:12px}.schedule-grid{min-width:0!important}.sg-time{font-size:9px;padding-right:4px}.sg-cell{font-size:10px;padding:3px 1px}.sg-header{font-size:10px}.data-table{font-size:11px}.data-table th,.data-table td{padding:6px 6px}}
 /* 排班表格響應式 */
-.th-editor-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-.th-editor-table-wrap table{min-width:500px;}
+.th-editor-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;}
+.th-editor-table-wrap table{width:100%;min-width:560px;table-layout:fixed;}
+.th-editor-table-wrap table th:first-child,.th-editor-table-wrap table td:first-child{width:60px;}
+.th-editor-table-wrap table th:nth-child(2),.th-editor-table-wrap table td:nth-child(2){width:55px;}
+.th-editor-table-wrap table th:nth-child(n+3),.th-editor-table-wrap table td:nth-child(n+3){width:calc((100% - 115px) / 5);}
 </style>
 </head>
 <body>
