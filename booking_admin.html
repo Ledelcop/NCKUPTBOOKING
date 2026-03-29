@@ -643,15 +643,18 @@ renderAll();
 // 如果有網址，自動連線
 if(SCRIPT_URL)loadData();
 
-// 每 30 秒靜默更新（不顯示 loading，不影響操作）
+// 每 30 秒靜默更新
 async function silentRefresh(){
-  if(!SCRIPT_URL)return;
+  const url=SCRIPT_URL||localStorage.getItem('adminScriptUrl')||'';
+  if(!url)return;
+  if(!SCRIPT_URL)SCRIPT_URL=url; // 確保 SCRIPT_URL 有值
   try{
-    const bRes=await apiFetch('getBookings');
-    if(bRes?.bookings)bookings=parseBk(bRes.bookings);
-    renderStats();renderAdmSched();renderAdmTable();renderManualList();renderPayment();
-    countdown=30;
-  }catch(e){}
+    const bRes=await fetch(`${url}?action=getBookings`).then(r=>r.json());
+    if(bRes?.bookings){
+      bookings=parseBk(bRes.bookings);
+      renderStats();renderAdmSched();renderAdmTable();renderManualList();renderPayment();
+    }
+  }catch(e){console.warn('自動更新失敗',e);}
 }
 
 let countdown=30;
