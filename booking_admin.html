@@ -129,6 +129,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
     <button class="tab-btn active" onclick="switchTab('admin',this)">後台總覽</button>
     <button class="tab-btn" onclick="switchTab('walkin',this)">現場報名</button>
     <span class="live-indicator"><span class="live-dot"></span>即時</span>
+    <span style="font-size:11px;color:rgba(255,255,255,0.35);">(<span id="refresh-countdown">30</span>s)</span>
     <button onclick="loadData()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(184,149,90,0.4);color:var(--gold-light);padding:6px 12px;border-radius:7px;font-size:12px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">重新整理</button>
   </div>
 </nav>
@@ -338,7 +339,7 @@ if(sessionStorage.getItem('adminAuth')==='1'){
 }
 
 // ↓↓↓ 把你的 Apps Script 網址貼在這裡可以省去每次輸入（選填）↓↓↓
-let SCRIPT_URL = '';
+let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrxTlaoBOVqh-EIJovrnqZL0UQ7wd-9ksaqewEGyVI7lWiwRuwCJEHkFFQZGSKPzFU6g/exec';
 // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 // schedule[dayIdx] = {bed: {segment: {name, gender}}}
@@ -641,6 +642,25 @@ renderAll();
 
 // 如果有網址，自動連線
 if(SCRIPT_URL)loadData();
+
+// 每 30 秒靜默更新（不顯示 loading，不影響操作）
+async function silentRefresh(){
+  if(!SCRIPT_URL)return;
+  try{
+    const bRes=await apiFetch('getBookings');
+    if(bRes?.bookings)bookings=parseBk(bRes.bookings);
+    renderStats();renderAdmSched();renderAdmTable();renderManualList();renderPayment();
+    countdown=30;
+  }catch(e){}
+}
+
+let countdown=30;
+setInterval(()=>{
+  countdown--;
+  const el=document.getElementById('refresh-countdown');
+  if(el)el.textContent=countdown+'s';
+  if(countdown<=0){countdown=30;silentRefresh();}
+},1000);
 </script>
 </body>
 </html>
