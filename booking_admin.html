@@ -554,7 +554,7 @@ function selWiSlot(s,el){
   document.getElementById('wi-sel-display').textContent=`已選：${DAYS[wiDay]} ${s} · ${wiThBed}床 ${todayTh?.name||''} · ${SEG_LABEL[wiSeg]||wiSeg}`;
 }
 function setWiCk(v,el){wiCk=v;document.querySelectorAll('#tab-walkin .toggle-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');updateWiPrice();}
-function updateWiPrice(){const parts=[...document.querySelectorAll('#wi-parts .part-btn.selected')].map(e=>e.textContent);const a=document.getElementById('wi-price');if(!parts.length){a.textContent='';return;}const base=parts.length*PRICE;const disc=wiCk?parts.length*DISC:0;a.innerHTML=`部位：${parts.join('、')} · NT$${base}${wiCk?` <span style="color:var(--red-soft);">-NT$${disc}</span> = <strong>NT$${base-disc}</strong>`:'`}`;`;}
+function updateWiPrice(){const parts=[...document.querySelectorAll('#wi-parts .part-btn.selected')].map(e=>e.textContent);const a=document.getElementById('wi-price');if(!parts.length){a.textContent='';return;}const base=parts.length*PRICE;const disc=wiCk?parts.length*DISC:0;a.innerHTML=`部位：${parts.join('、')} · NT$${base}${wiCk?` <span style="color:var(--red-soft);">-NT$${disc}</span> = <strong>NT$${base-disc}</strong>`:''}`;};
 async function submitWalkin(){
   const bn=document.getElementById('wi-booker').value.trim(),bp=document.getElementById('wi-phone').value.trim(),rn=document.getElementById('wi-recipient').value.trim();
   const parts=[...document.querySelectorAll('#wi-parts .part-btn.selected')].map(e=>e.textContent);
