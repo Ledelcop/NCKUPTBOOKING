@@ -139,7 +139,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 
 <div class="page">
   <div class="page-title">傳情預約 · 線上報名</div>
-  <div class="page-subtitle">每人最多傳情給 3 位被傳情人，請依步驟填寫</div>
+  <div class="page-subtitle">每人最多傳情給 3 位被傳情人，每位可各自選擇治療師與時段</div>
 
   <div class="info-banner">
     <div class="info-banner-title">成大物治週 · 軟組織放鬆 活動資訊</div>
@@ -183,48 +183,11 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
     <button class="add-recipient-btn" id="add-recipient-btn" onclick="addRecipient()">＋ 新增被傳情人</button>
   </div>
 
+  <!-- 步驟三（移入被傳情人卡片內） -->
+
   <!-- 步驟三 -->
   <div class="card">
-    <div class="card-title">步驟三 · 選擇日期 · 時段 · 治療師</div>
-
-    <!-- 日期 -->
-    <div style="margin-bottom:6px;font-size:12px;color:var(--stone);font-weight:500;">選擇日期</div>
-    <div class="day-tabs" id="booking-day-tabs">
-      <div class="day-tab active" onclick="selectDay(0,this)">5/11 (一)</div>
-      <div class="day-tab" onclick="selectDay(1,this)">5/12 (二)</div>
-      <div class="day-tab" onclick="selectDay(2,this)">5/13 (三)</div>
-      <div class="day-tab" onclick="selectDay(3,this)">5/14 (四)</div>
-      <div class="day-tab" onclick="selectDay(4,this)">5/15 (五)</div>
-    </div>
-
-    <!-- 時段段落 -->
-    <div style="margin-bottom:8px;font-size:12px;color:var(--stone);font-weight:500;">選擇時段</div>
-    <div class="segment-group" id="segment-group">
-      <div class="segment-btn active" onclick="selectSegment('19-20',this)">
-        <div class="segment-btn-time">19:00 — 20:00</div>
-        <div class="segment-btn-label">前段</div>
-      </div>
-      <div class="segment-btn" onclick="selectSegment('20-21',this)">
-        <div class="segment-btn-time">20:00 — 21:00</div>
-        <div class="segment-btn-label">後段</div>
-      </div>
-    </div>
-
-    <!-- 治療師 -->
-    <div style="margin-bottom:10px;font-size:12px;color:var(--stone);font-weight:500;">選擇治療師</div>
-    <div class="therapist-grid" id="therapist-grid"></div>
-
-    <!-- 時段格 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:16px;">
-      <label style="font-size:12px;color:var(--stone);font-weight:500;">選擇預約時段</label>
-      <span class="live-indicator"><span class="live-dot"></span>即時更新</span>
-    </div>
-    <div id="slot-area"><div style="color:var(--stone-light);font-size:13px;">請先選擇治療師</div></div>
-  </div>
-
-  <!-- 步驟四 -->
-  <div class="card">
-    <div class="card-title">步驟四 · 費用試算與備注</div>
+    <div class="card-title">步驟三 · 費用試算與備注</div>
     <div id="price-area"><div style="color:var(--stone-light);font-size:13px;">請先為被傳情人選擇部位</div></div>
     <div class="section-divider"></div>
     <div class="form-group"><label>備注（特殊需求、過敏資訊等）</label><textarea id="notes" rows="2" placeholder="任何需要告知的事項…"></textarea></div>
@@ -264,10 +227,19 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 <script>
 const DAYS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
 const PARTS=['上肢','下肢','背部','肩頸'];
-const PRICE=65,DISC=5;
+const PRICE=65;
 const SEGMENTS=['19-20','20-21'];
-// 每段的時段：前5個 vs 後5個
-function buildSlots(){const s=[];let h=19,m=0;for(let i=0;i<10;i++){const st=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;let eh=h,em=m+12;if(em>=60){eh++;em-=60;}s.push(`${st}-${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}`);m+=12;if(m>=60){h++;m-=60;}}return s;}
+
+function buildSlots(){
+  const s=[];let h=19,m=0;
+  for(let i=0;i<10;i++){
+    const st=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    let eh=h,em=m+12;if(em>=60){eh++;em-=60;}
+    s.push(`${st}-${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}`);
+    m+=12;if(m>=60){h++;m-=60;}
+  }
+  return s;
+}
 const ALL_SLOTS=buildSlots();
 const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
 
@@ -275,14 +247,11 @@ const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
 let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrxTlaoBOVqh-EIJovrnqZL0UQ7wd-9ksaqewEGyVI7lWiwRuwCJEHkFFQZGSKPzFU6g/exec';
 // ↓↓↓ 必須與 Apps Script 裡的 SECRET_KEY 完全一致 ↓↓↓
 const SECRET_KEY = 'DCPT116';
-// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
-// schedule[dayIdx] = {bed: {segment: {name,gender}}}
 let schedule=[[],[],[],[],[]];
 let bookings=[],recipients=[];
-let selDay=0,selSeg='19-20',selTh=null,selSlot=null;
 
-function apiFetch(a){return fetch(`${SCRIPT_URL}?action=${a}`).then(r=>r.json());}
+function apiFetch(a){return fetch(`${SCRIPT_URL}?action=${a}&_t=${Date.now()}`).then(r=>r.json());}
 function apiPost(d){return fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({...d,secret:SECRET_KEY})}).then(r=>r.json()).catch(()=>null);}
 function showLo(t='載入中...'){document.getElementById('lo-text').textContent=t;document.getElementById('lo').style.display='flex';}
 function hideLo(){document.getElementById('lo').style.display='none';}
@@ -297,7 +266,7 @@ async function loadData(){
     if(tRes?.schedule)schedule=tRes.schedule;
   }catch(e){showToast('連線失敗，請確認網址');}
   hideLo();
-  renderThGrid();
+  renderRecipients();
 }
 
 function parseBk(arr){
@@ -313,7 +282,6 @@ function parseBk(arr){
   }));
 }
 
-// 取得某天某段的治療師清單
 function getTHforDaySeg(dayIdx,seg){
   const dayMap=schedule[dayIdx]||{};
   const result=[];
@@ -323,44 +291,101 @@ function getTHforDaySeg(dayIdx,seg){
   return result;
 }
 
-// 查詢某床某段某天的已預約時段
+// 只回傳已被佔用的時段（不回傳是誰預約）
 function getBkSlots(bed,seg,dayIdx){
   return bookings.filter(b=>b.bed===bed&&b.segment===seg&&b.dayIdx===dayIdx).map(b=>b.time);
-}
-function getBkForSlot(bed,seg,dayIdx,slot){
-  return bookings.find(b=>b.bed===bed&&b.segment===seg&&b.dayIdx===dayIdx&&b.time===slot);
 }
 
 function genderClass(g){return g==='男'?'male':g==='女'?'female':'other';}
 function genderLabel(g){return g==='男'?'男治療師':g==='女'?'女治療師':g||'其他';}
 
-function selectDay(idx,el){
-  selDay=idx;selTh=null;selSlot=null;
-  document.querySelectorAll('#booking-day-tabs .day-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  renderThGrid();renderSlots();
+// ================================================================
+// 每位被傳情人各自的選擇狀態
+// recipients[i] = { name, fb, parts, contactMethod, contactAccount,
+//                   selDay, selSeg, selTh, selSlots }
+// ================================================================
+function addRecipient(){
+  if(recipients.length>=3)return;
+  recipients.push({name:'',fb:'',parts:[],contactMethod:'fb',contactAccount:'',
+    selDay:0,selSeg:'19-20',selTh:null,selSlots:[]});
+  renderRecipients();
+}
+function removeRecipient(i){recipients.splice(i,1);renderRecipients();}
+function updR(i,f,v){recipients[i][f]=v;updatePrice();}
+
+function togglePart(i,p){
+  const r=recipients[i];
+  const idx=r.parts.indexOf(p);
+  if(idx>-1)r.parts.splice(idx,1);
+  else r.parts.push(p);
+  // 部位數改變 → 若已選時段超過部位數，截斷
+  if(r.selSlots.length>r.parts.length)r.selSlots=r.selSlots.slice(0,r.parts.length);
+  renderRecipientCard(i);
+  updatePrice();
 }
 
-function selectSegment(seg,el){
-  selSeg=seg;selTh=null;selSlot=null;
-  document.querySelectorAll('#segment-group .segment-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  renderThGrid();renderSlots();
+function setContact(i,m){
+  recipients[i].contactMethod=m;
+  recipients[i].contactAccount='';
+  renderRecipientCard(i);
+}
+function updContactAccount(i,v){recipients[i].contactAccount=v;}
+
+function rcSelectDay(i,idx){
+  recipients[i].selDay=idx;
+  recipients[i].selTh=null;
+  recipients[i].selSlots=[];
+  renderRecipientCard(i);
+}
+function rcSelectSegment(i,seg){
+  recipients[i].selSeg=seg;
+  recipients[i].selTh=null;
+  recipients[i].selSlots=[];
+  renderRecipientCard(i);
+}
+function rcSelectTh(i,t){
+  recipients[i].selTh=t;
+  recipients[i].selSlots=[];
+  renderRecipientCard(i);
+}
+function rcSelectSlot(i,s){
+  const r=recipients[i];
+  const maxSlots=r.parts.length||1;
+  if(r.selSlots.includes(s))return;
+  if(r.selSlots.length>=maxSlots){showToast(`已選滿 ${maxSlots} 個時段（等於部位數）`);return;}
+  r.selSlots.push(s);
+  updatePrice();
+  renderSlotArea(i);
+}
+function rcDeselectSlot(i,s){
+  const r=recipients[i];
+  const idx=r.selSlots.indexOf(s);
+  if(idx===r.selSlots.length-1)r.selSlots.pop();
+  else showToast('只能移除最後選的時段');
+  updatePrice();
+  renderSlotArea(i);
 }
 
-function renderThGrid(){
-  const ths=getTHforDaySeg(selDay,selSeg);
-  const c=document.getElementById('therapist-grid');
-  if(!ths.length){c.innerHTML='<div style="color:var(--stone-light);font-size:13px;">本日此時段無排班</div>';return;}
-  c.innerHTML=ths.map(t=>{
-    const bkd=getBkSlots(t.bed,selSeg,selDay);
-    const slots=SLOTS_BY_SEG[selSeg]||[];
+// 只重新渲染時段格，不重建整張卡（保留 input 焦點）
+function renderSlotArea(i){
+  const area=document.getElementById(`slot-area-${i}`);
+  if(!area)return;
+  area.innerHTML=buildSlotAreaHTML(i,recipients[i]);
+}
+
+function buildThGridHTML(i,r){
+  const ths=getTHforDaySeg(r.selDay,r.selSeg);
+  if(!ths.length)return'<div style="color:var(--stone-light);font-size:13px;">本日此時段無排班</div>';
+  return ths.map(t=>{
+    const bkd=getBkSlots(t.bed,r.selSeg,r.selDay);
+    const slots=SLOTS_BY_SEG[r.selSeg]||[];
     const bk=bkd.length,fr=slots.length-bk;
-    const dots=slots.map((_,i)=>`<div class="th-dot ${i<bk?'busy':'free'}"></div>`).join('');
+    const dots=slots.map((_,si)=>`<div class="th-dot ${si<bk?'busy':'free'}"></div>`).join('');
     const gc=genderClass(t.gender);
     const ini=t.name?t.name.slice(0,1):t.bed;
-    const isSel=selTh&&selTh.bed===t.bed&&selTh.segment===t.segment;
-    return`<div class="th-card ${isSel?'selected':''}" onclick='selectTh(${JSON.stringify({bed:t.bed,segment:t.segment,name:t.name,gender:t.gender}).replace(/'/g,"&#39;")},this)'>
+    const isSel=r.selTh&&r.selTh.bed===t.bed&&r.selTh.segment===t.segment;
+    const tData=JSON.stringify({bed:t.bed,segment:t.segment,name:t.name,gender:t.gender}).replace(/'/g,"&#39;");
+    return`<div class="th-card ${isSel?'selected':''}" onclick='rcSelectTh(${i},${tData})'>
       <div class="th-avatar ${gc}">${ini}</div>
       <div class="th-name">${t.name}</div>
       <div class="th-bed">${t.bed} 床</div>
@@ -371,90 +396,106 @@ function renderThGrid(){
   }).join('');
 }
 
-function selectTh(t,el){
-  selTh=t;selSlot=null;
-  document.querySelectorAll('.th-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  renderSlots();
-}
-
-function renderSlots(){
-  const c=document.getElementById('slot-area');
-  if(!selTh){c.innerHTML='<div style="color:var(--stone-light);font-size:13px;padding:8px 0;">請先選擇治療師</div>';return;}
-  const slots=SLOTS_BY_SEG[selSeg]||[];
-  const bkd=getBkSlots(selTh.bed,selSeg,selDay);
-  c.innerHTML=`<div class="slots-grid">${slots.map(s=>{
+function buildSlotAreaHTML(i,r){
+  if(!r.selTh)return'<div style="color:var(--stone-light);font-size:13px;padding:8px 0;">請先選擇治療師</div>';
+  const slots=SLOTS_BY_SEG[r.selSeg]||[];
+  const bkd=getBkSlots(r.selTh.bed,r.selSeg,r.selDay);
+  const maxSlots=r.parts.length||1;
+  const selCount=r.selSlots.length;
+  const isFull=selCount>=maxSlots;
+  let html=`<div style="font-size:12px;color:var(--stone);margin-bottom:10px;">需選 <b style="color:var(--gold);">${maxSlots}</b> 個連續時段（等於部位數）`;
+  if(selCount>0)html+=`，已選 <b style="color:var(--gold);">${selCount}</b> 個`;
+  if(isFull)html+=` <span style="color:var(--green-soft);font-weight:500;">✓ 已選滿</span>`;
+  html+=`</div><div class="slots-grid">`;
+  slots.forEach(s=>{
     const isB=bkd.includes(s);
-    const bk=isB?getBkForSlot(selTh.bed,selSeg,selDay,s):null;
-    const isSel=selSlot===s;
-    if(isB)return`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn booked"><div class="slot-booked-name">${bk?bk.recipient:'已預約'}</div>${bk?`<div class="slot-booked-parts">${bk.parts.join('、')}</div>`:''}</div></div>`;
-    return`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn ${isSel?'selected':'available'}" onclick="selectSlot('${s}',this)">${isSel?'已選擇':'可預約'}</div></div>`;
-  }).join('')}</div>`;
+    const isSel=r.selSlots.includes(s);
+    const lastSel=r.selSlots[r.selSlots.length-1];
+    const slotIdx=slots.indexOf(s);
+    const lastIdx=lastSel?slots.indexOf(lastSel):-1;
+    const canSelect=!isB&&!isFull&&(r.selSlots.length===0||(slotIdx===lastIdx+1));
+    if(isB){
+      // 改動1：只顯示「已預約」，不洩漏其他人姓名/部位
+      html+=`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn booked">已預約</div></div>`;
+    }else if(isSel){
+      html+=`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn selected" onclick="rcDeselectSlot(${i},'${s}')">已選擇 ✕</div></div>`;
+    }else if(canSelect){
+      html+=`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn available" onclick="rcSelectSlot(${i},'${s}')">可預約</div></div>`;
+    }else if(isFull){
+      html+=`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn" style="border:1.5px solid var(--border);background:var(--cream-dark);color:var(--stone-light);cursor:not-allowed;">已選滿</div></div>`;
+    }else{
+      html+=`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn" style="border:1.5px solid var(--border);background:var(--cream-dark);color:var(--stone-light);cursor:not-allowed;">請先選前一格</div></div>`;
+    }
+  });
+  html+='</div>';
+  return html;
 }
 
-function selectSlot(s,el){
-  selSlot=s;
-  document.querySelectorAll('.slot-btn:not(.booked)').forEach(x=>{x.classList.remove('selected');x.classList.add('available');x.textContent='可預約';});
-  el.classList.remove('available');el.classList.add('selected');el.textContent='已選擇';
+function buildRecipientCardInner(i,r){
+  const dayTabsHTML=DAYS.map((d,di)=>`<div class="day-tab ${r.selDay===di?'active':''}" onclick="rcSelectDay(${i},${di})">${d}</div>`).join('');
+  const thHTML=buildThGridHTML(i,r);
+  const slotHTML=buildSlotAreaHTML(i,r);
+  const contactHTML=`
+    <div class="contact-section" style="margin-top:14px;">
+      <label style="font-size:12px;color:var(--stone);font-weight:500;display:block;margin-bottom:8px;">通知被傳情人的聯絡方式</label>
+      <div class="contact-opts">
+        <div class="contact-opt ${r.contactMethod==='fb'?'selected':''}" data-m="fb" onclick="setContact(${i},'fb')">Facebook<div class="contact-opt-sub">Messenger（工作人員代傳）</div></div>
+        <div class="contact-opt ${r.contactMethod==='line'?'selected':''}" data-m="line" onclick="setContact(${i},'line')">LINE<div class="contact-opt-sub">人工傳送，請填 LINE ID</div></div>
+        <div class="contact-opt ${r.contactMethod==='gmail'?'selected':''}" data-m="gmail" onclick="setContact(${i},'gmail')">Gmail<div class="contact-opt-sub">人工傳送，請填 Email</div></div>
+      </div>
+      ${r.contactMethod==='line'?`<div style="margin-top:10px;"><label style="font-size:12px;color:var(--stone);font-weight:500;">LINE ID</label><input type="text" value="${r.contactAccount||''}" oninput="updContactAccount(${i},this.value)" placeholder="請輸入被傳情人的 LINE ID" style="margin-top:5px;"><div style="font-size:11px;color:var(--stone-light);margin-top:4px;">工作人員將透過此 LINE 帳號傳送預約資訊</div></div>`:''}
+      ${r.contactMethod==='gmail'?`<div style="margin-top:10px;"><label style="font-size:12px;color:var(--stone);font-weight:500;">Email</label><input type="email" value="${r.contactAccount||''}" oninput="updContactAccount(${i},this.value)" placeholder="請輸入被傳情人的 Email" style="margin-top:5px;"><div style="font-size:11px;color:var(--stone-light);margin-top:4px;">工作人員將透過此 Email 傳送預約資訊</div></div>`:''}
+    </div>`;
+
+  return `
+    <div class="rc-header"><span class="rc-num">被傳情人 ${i+1}</span><button class="rc-remove" onclick="removeRecipient(${i})">移除</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label class="required">姓名</label><input type="text" value="${r.name}" oninput="updR(${i},'name',this.value)" placeholder="被傳情人姓名"></div>
+      <div class="form-group"><label class="required">臉書連結</label><input type="url" value="${r.fb}" oninput="updR(${i},'fb',this.value)" placeholder="https://facebook.com/..."></div>
+      <div class="form-group full"><label class="required">放鬆部位（可多選，每部位需佔 1 個時段）</label>
+        <div class="parts-group">${PARTS.map(p=>`<div class="part-btn ${r.parts.includes(p)?'selected':''}" onclick="togglePart(${i},'${p}')">${p}<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">NT$65</div></div>`).join('')}</div>
+        ${r.parts.length>0?`<div style="font-size:12px;color:var(--gold);margin-top:6px;font-weight:500;">共 ${r.parts.length} 個部位，需選 ${r.parts.length} 個連續時段（${r.parts.length*10} 分鐘）</div>`:''}
+      </div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border-light);">
+      <div style="font-size:12px;color:var(--gold);font-weight:500;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px;">選擇日期 · 時段 · 治療師</div>
+      <div style="margin-bottom:6px;font-size:12px;color:var(--stone);font-weight:500;">日期</div>
+      <div class="day-tabs" style="margin-bottom:14px;">${dayTabsHTML}</div>
+      <div style="margin-bottom:8px;font-size:12px;color:var(--stone);font-weight:500;">時段</div>
+      <div class="segment-group" style="margin-bottom:14px;">
+        <div class="segment-btn ${r.selSeg==='19-20'?'active':''}" onclick="rcSelectSegment(${i},'19-20')">
+          <div class="segment-btn-time">19:00 — 20:00</div><div class="segment-btn-label">前段</div>
+        </div>
+        <div class="segment-btn ${r.selSeg==='20-21'?'active':''}" onclick="rcSelectSegment(${i},'20-21')">
+          <div class="segment-btn-time">20:00 — 21:00</div><div class="segment-btn-label">後段</div>
+        </div>
+      </div>
+      <div style="margin-bottom:10px;font-size:12px;color:var(--stone);font-weight:500;">治療師</div>
+      <div class="therapist-grid" style="margin-bottom:16px;">${thHTML}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--stone);font-weight:500;">選擇預約時段</label>
+        <span class="live-indicator"><span class="live-dot"></span>即時更新</span>
+      </div>
+      <div id="slot-area-${i}">${slotHTML}</div>
+    </div>
+    ${contactHTML}`;
 }
 
-// 被傳情人
-function addRecipient(){if(recipients.length>=3)return;recipients.push({name:'',fb:'',parts:[],contactMethod:'fb',contactAccount:''});renderRecipients();}
-function removeRecipient(i){recipients.splice(i,1);renderRecipients();}
-function updR(i,f,v){recipients[i][f]=v;updatePrice();}
-function togglePart(i,p,el){const idx=recipients[i].parts.indexOf(p);if(idx>-1)recipients[i].parts.splice(idx,1);else recipients[i].parts.push(p);el.classList.toggle('selected');updatePrice();}
-function setContact(i,m){
-  recipients[i].contactMethod=m;
-  recipients[i].contactAccount='';
-  const card=document.querySelectorAll('.recipient-card')[i];
-  card.querySelectorAll('.contact-opt').forEach(o=>o.classList.remove('selected'));
-  card.querySelectorAll(`.contact-opt[data-m="${m}"]`)[0]?.classList.add('selected');
-  // 顯示/隱藏對應帳號輸入欄
-  card.querySelector('.account-fb').style.display=m==='fb'?'none':'none'; // fb不需帳號
-  card.querySelector('.account-line').style.display=m==='line'?'block':'none';
-  card.querySelector('.account-gmail').style.display=m==='gmail'?'block':'none';
-}
-function updContactAccount(i,v){recipients[i].contactAccount=v;}
 function renderRecipients(){
   const rem=3-recipients.length;
-  document.getElementById('recipients-list').innerHTML=recipients.map((r,i)=>`
-    <div class="recipient-card">
-      <div class="rc-header"><span class="rc-num">被傳情人 ${i+1}</span><button class="rc-remove" onclick="removeRecipient(${i})">移除</button></div>
-      <div class="form-grid">
-        <div class="form-group"><label class="required">姓名</label><input type="text" value="${r.name}" oninput="updR(${i},'name',this.value)" placeholder="被傳情人姓名"></div>
-        <div class="form-group"><label class="required">臉書連結</label><input type="url" value="${r.fb}" oninput="updR(${i},'fb',this.value)" placeholder="https://facebook.com/..."></div>
-        <div class="form-group full"><label class="required">放鬆部位（可多選）</label>
-          <div class="parts-group">${PARTS.map(p=>`<div class="part-btn ${r.parts.includes(p)?'selected':''}" onclick="togglePart(${i},'${p}',this)">${p}<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">NT$65</div></div>`).join('')}</div></div>
-      </div>
-      <div class="contact-section">
-        <label style="font-size:12px;color:var(--stone);font-weight:500;display:block;margin-bottom:8px;">通知被傳情人的聯絡方式</label>
-        <div class="contact-opts">
-          <div class="contact-opt ${r.contactMethod==='fb'?'selected':''}" data-m="fb" onclick="setContact(${i},'fb')">
-            Facebook<div class="contact-opt-sub">Messenger（工作人員代傳）</div>
-          </div>
-          <div class="contact-opt ${r.contactMethod==='line'?'selected':''}" data-m="line" onclick="setContact(${i},'line')">
-            LINE<div class="contact-opt-sub">人工傳送，請填 LINE ID</div>
-          </div>
-          <div class="contact-opt ${r.contactMethod==='gmail'?'selected':''}" data-m="gmail" onclick="setContact(${i},'gmail')">
-            Gmail<div class="contact-opt-sub">人工傳送，請填 Email</div>
-          </div>
-        </div>
-        <div class="account-line" style="margin-top:10px;display:${r.contactMethod==='line'?'block':'none'};">
-          <label style="font-size:12px;color:var(--stone);font-weight:500;">LINE ID</label>
-          <input type="text" value="${r.contactAccount||''}" oninput="updContactAccount(${i},this.value)" placeholder="請輸入被傳情人的 LINE ID" style="margin-top:5px;">
-          <div style="font-size:11px;color:var(--stone-light);margin-top:4px;">工作人員將透過此 LINE ID 傳送預約資訊</div>
-        </div>
-        <div class="account-gmail" style="margin-top:10px;display:${r.contactMethod==='gmail'?'block':'none'};">
-          <label style="font-size:12px;color:var(--stone);font-weight:500;">Email</label>
-          <input type="email" value="${r.contactAccount||''}" oninput="updContactAccount(${i},this.value)" placeholder="請輸入被傳情人的 Email" style="margin-top:5px;">
-          <div style="font-size:11px;color:var(--stone-light);margin-top:4px;">工作人員將透過此 Email 傳送預約資訊</div>
-        </div>
-      </div>
-    </div>`).join('');
+  const list=document.getElementById('recipients-list');
+  list.innerHTML=recipients.map((r,i)=>
+    `<div class="recipient-card" id="rc-card-${i}">${buildRecipientCardInner(i,r)}</div>`
+  ).join('');
   const btn=document.getElementById('add-recipient-btn');
   btn.style.display=rem<=0?'none':'block';
   if(rem>0)btn.textContent=`＋ 新增被傳情人（還可新增 ${rem} 位）`;
   updatePrice();
+}
+
+function renderRecipientCard(i){
+  const card=document.getElementById(`rc-card-${i}`);
+  if(card)card.innerHTML=buildRecipientCardInner(i,recipients[i]);
 }
 
 function updatePrice(){
@@ -462,7 +503,15 @@ function updatePrice(){
   const valid=recipients.filter(r=>r.parts.length>0);
   if(!valid.length){a.innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先為被傳情人選擇部位</div>';return;}
   let tot=0;
-  const rows=valid.map(r=>{const b=r.parts.length*PRICE;tot+=b;return`<div class="price-row"><span>${r.name||'被傳情人'}（${r.parts.join('、')}）</span><span>NT$${b}</span></div>`;}).join('');
+  const rows=valid.map(r=>{
+    const b=r.parts.length*PRICE;
+    tot+=b;
+    const need=r.parts.length,done=r.selSlots.length;
+    const status=done>=need
+      ?`<span style="color:var(--green-soft);font-size:11px;"> ✓ 時段已選滿</span>`
+      :`<span style="color:var(--stone-light);font-size:11px;"> （需再選 ${need-done} 個時段）</span>`;
+    return`<div class="price-row"><span>${r.name||'被傳情人'}（${r.parts.join('、')}）${status}</span><span>NT$${b}</span></div>`;
+  }).join('');
   a.innerHTML=`<div class="price-calc">${rows}<div class="price-row total"><span>預估合計</span><span>NT$${tot}</span></div><div style="font-size:11px;color:var(--stone);margin-top:6px;">打卡折扣（每部位 -NT$5）於現場繳費時確認套用</div></div>`;
 }
 
@@ -473,59 +522,67 @@ async function submitBooking(){
   const be=document.getElementById('booker-email').value.trim();
   if(!bn||!bp||!bfb||!be){showToast('請填寫傳情人姓名、電話、臉書連結與 Email');return;}
   if(!recipients.length){showToast('請至少新增一位被傳情人');return;}
-  if(recipients.some(r=>r.parts.length===0)){showToast('請為每位被傳情人選擇至少一個部位');return;}
-  if(!selTh){showToast('請選擇治療師');return;}
-  if(!selSlot){showToast('請選擇時段');return;}
+  for(let i=0;i<recipients.length;i++){
+    const r=recipients[i];
+    if(!r.name){showToast(`被傳情人 ${i+1} 請填寫姓名`);return;}
+    if(r.parts.length===0){showToast(`被傳情人 ${i+1} 請選擇至少一個部位`);return;}
+    if(!r.selTh){showToast(`被傳情人 ${i+1} 請選擇治療師`);return;}
+    if(r.selSlots.length<r.parts.length){showToast(`被傳情人 ${i+1} 需選 ${r.parts.length} 個時段（目前 ${r.selSlots.length} 個）`);return;}
+  }
 
-  // ── 防衝突：送出前先拉最新資料確認時段仍空閒 ──────────────
+  // 防衝突檢查
   showLo('確認時段是否仍空閒...');
   try{
     const latest=await apiFetch('getBookings');
     if(latest?.bookings){
       const fresh=parseBk(latest.bookings);
-      const conflict=fresh.some(b=>
-        b.bed===selTh.bed&&b.segment===selSeg&&b.dayIdx===selDay&&b.time===selSlot
-      );
-      if(conflict){
-        hideLo();
-        // 更新本地預約資料並重新渲染
-        bookings=fresh;
-        renderThGrid();renderSlots();
-        showToast('⚠️ 抱歉，此時段剛被其他人預約！已為你更新最新狀態，請重新選擇時段。',5000);
-        selSlot=null;
-        return;
+      for(let i=0;i<recipients.length;i++){
+        const r=recipients[i];
+        const conflict=r.selSlots.find(s=>
+          fresh.some(b=>b.bed===r.selTh.bed&&b.segment===r.selSeg&&b.dayIdx===r.selDay&&b.time===s)
+        );
+        if(conflict){
+          hideLo();
+          bookings=fresh;
+          recipients[i].selSlots=[];
+          renderRecipientCard(i);
+          showToast(`⚠️ 被傳情人 ${i+1} 的時段 ${conflict} 剛被預約！請重新選擇。`,5000);
+          return;
+        }
       }
     }
-  }catch(e){/* 如果網路問題跳過衝突檢查，繼續送出 */}
+  }catch(e){}
 
   const notes=document.getElementById('notes').value;
-  const dayLabel=DAYS[selDay];
-  const segLabel=selSeg==='19-20'?'19:00—20:00（前段）':'20:00—21:00（後段）';
   const submittedBookings=[];
 
   showLo('送出預約中...');
   for(const r of recipients){
-    const amt=r.parts.length*PRICE;
-    const bk={booker:bn,bookerPhone:bp,bookerFb:bfb,bookerEmail:be,
-      recipient:r.name||'待填',recipientFb:r.fb,parts:r.parts,
-      therapistName:selTh.name,therapistGender:selTh.gender,
-      bed:selTh.bed,segment:selSeg,
-      dayIdx:selDay,time:selSlot,amount:amt,
-      checkin:false,payment:'unpaid',type:'online',
-      contactMethod:r.contactMethod,contactAccount:r.contactAccount||'',notified:false,notes};
-    const res=await apiPost({action:'addBooking',booking:bk});
-    const id=res?.id||('L'+Date.now());
-    bookings.push({...bk,id});
-    submittedBookings.push({...bk,id});
+    const dayLabel=DAYS[r.selDay];
+    const segLabel=r.selSeg==='19-20'?'19:00—20:00（前段）':'20:00—21:00（後段）';
+    for(let si=0;si<r.selSlots.length;si++){
+      const s=r.selSlots[si];
+      const bk={booker:bn,bookerPhone:bp,bookerFb:bfb,bookerEmail:be,
+        recipient:r.name||'待填',recipientFb:r.fb,parts:r.parts,
+        therapistName:r.selTh.name,therapistGender:r.selTh.gender,
+        bed:r.selTh.bed,segment:r.selSeg,
+        dayIdx:r.selDay,time:s,amount:r.parts.length*PRICE,
+        checkin:false,payment:'unpaid',type:'online',
+        contactMethod:r.contactMethod,contactAccount:r.contactAccount||'',
+        notified:false,notes:si===0?notes:`【第${si+1}個時段】${notes}`};
+      const res=await apiPost({action:'addBooking',booking:bk});
+      const id=res?.id||('L'+Date.now()+si);
+      bookings.push({...bk,id});
+      if(si===0)submittedBookings.push({...bk,id,slotCount:r.selSlots.length,
+        dayLabel,segLabel,selSlots:[...r.selSlots]});
+    }
   }
   hideLo();
 
-  // 顯示確認頁
   document.querySelector('.page').style.display='none';
   document.getElementById('confirm-page').style.display='block';
   window.scrollTo(0,0);
 
-  // 建立確認頁內容
   const totalAmt=submittedBookings.reduce((s,b)=>s+b.amount,0);
   document.getElementById('confirm-content').innerHTML=`
     <div style="display:grid;gap:10px;">
@@ -533,74 +590,48 @@ async function submitBooking(){
         <span style="color:var(--stone);min-width:90px;">傳情人</span>
         <span style="font-weight:500;">${bn}</span>
       </div>
-      <div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:13px;">
-        <span style="color:var(--stone);min-width:90px;">日期</span>
-        <span style="font-weight:500;">${dayLabel}</span>
-      </div>
-      <div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:13px;">
-        <span style="color:var(--stone);min-width:90px;">時段</span>
-        <span style="font-weight:500;">${segLabel}</span>
-      </div>
-      <div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:13px;">
-        <span style="color:var(--stone);min-width:90px;">開始時間</span>
-        <span style="font-weight:500;">${selSlot}</span>
-      </div>
-      <div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-light);font-size:13px;">
-        <span style="color:var(--stone);min-width:90px;">治療師</span>
-        <span style="font-weight:500;">${selTh.name}（${selTh.bed}床）${selTh.gender?` · ${selTh.gender}治療師`:''}</span>
-      </div>
-      ${submittedBookings.map(b=>`
+      ${submittedBookings.map((b,i)=>`
       <div style="background:var(--cream);border-radius:8px;padding:12px;font-size:13px;">
-        <div style="font-weight:500;margin-bottom:6px;">被傳情人：${b.recipient}</div>
-        <div style="color:var(--stone);">部位：${b.parts.join('、')} · NT$${b.amount}</div>
-        <div style="color:var(--stone);font-size:11px;margin-top:3px;">聯絡方式：${b.contactMethod==='fb'?'Facebook Messenger':b.contactMethod==='line'?`LINE（${b.contactAccount||'待填'}）`:`Gmail（${b.contactAccount||'待填'}）`}</div>
+        <div style="font-weight:500;margin-bottom:8px;font-size:14px;">被傳情人 ${i+1}：${b.recipient}</div>
+        <div style="color:var(--stone);margin-bottom:3px;">日期：${b.dayLabel}　${b.segLabel}</div>
+        <div style="color:var(--stone);margin-bottom:3px;">時間：${b.selSlots[0]} — ${b.selSlots[b.selSlots.length-1].split('-')[1]}（共 ${b.slotCount} 個時段，${b.slotCount*10} 分鐘）</div>
+        <div style="color:var(--stone);margin-bottom:3px;">治療師：${b.therapistName}（${b.bed}床）${b.therapistGender?' · '+b.therapistGender+'治療師':''}</div>
+        <div style="color:var(--stone);margin-bottom:3px;">部位：${b.parts.join('、')} · NT$${b.amount}</div>
+        <div style="color:var(--stone);font-size:11px;">聯絡：${b.contactMethod==='fb'?'Facebook Messenger':b.contactMethod==='line'?`LINE（${b.contactAccount||'待填'}）`:`Gmail（${b.contactAccount||'待填'}）`}</div>
+        <div style="color:var(--stone-light);font-size:11px;margin-top:3px;">編號：${b.id}</div>
       </div>`).join('')}
       <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:500;">
         <span>預估合計</span><span>NT$${totalAmt}</span>
       </div>
-      <div style="font-size:11px;color:var(--stone);">編號：${submittedBookings.map(b=>b.id).join('、')}</div>
     </div>`;
 
-  // 寄確認 Email（使用 EmailJS）
-  // ↓ 需要到 emailjs.com 註冊後填入你的 Service ID、Template ID、Public Key ↓
   const EMAILJS_SERVICE='your_service_id';
   const EMAILJS_TEMPLATE='your_template_id';
   const EMAILJS_KEY='your_public_key';
   if(EMAILJS_SERVICE!=='your_service_id'){
     const recipientSummary=submittedBookings.map(b=>`${b.recipient}（${b.parts.join('、')}）NT$${b.amount}`).join('\n');
     emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{
-      to_email:be,
-      booker_name:bn,
-      day:dayLabel,
-      segment:segLabel,
-      time:selSlot,
-      therapist:`${selTh.name}（${selTh.bed}床）`,
-      recipients:recipientSummary,
-      total:`NT$${totalAmt}`,
-      booking_ids:submittedBookings.map(b=>b.id).join('、')
+      to_email:be,booker_name:bn,recipients:recipientSummary,
+      total:`NT$${totalAmt}`,booking_ids:submittedBookings.map(b=>b.id).join('、')
     },EMAILJS_KEY).catch(()=>{});
   }
 }
 
-// 靜默更新時段（不影響用戶正在填的資料）
+// 靜默更新（只更新時段格，不重建卡片，避免 input 失焦）
 async function silentRefresh(){
   if(!SCRIPT_URL||SCRIPT_URL==='在此貼上你的網址')return;
   try{
-    const bRes=await apiFetch('getBookings');
+    const bRes=await fetch(`${SCRIPT_URL}?action=getBookings&_t=${Date.now()}`).then(r=>r.json());
     if(bRes?.bookings){
       bookings=parseBk(bRes.bookings);
-      // 只更新時段格，不動其他東西
-      if(selTh)renderSlots();
-      else renderThGrid();
+      recipients.forEach((_,i)=>renderSlotArea(i));
     }
   }catch(e){}
 }
 
 loadData();
 addRecipient();
-renderThGrid();
-// 每 30 秒自動更新時段資料
-setInterval(silentRefresh, 30000);
+setInterval(silentRefresh,30000);
 </script>
 </body>
 </html>
