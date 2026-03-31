@@ -256,45 +256,58 @@ function renderResult(name){
   area.innerHTML=html;
 }
 
-// ── 續時功能 ─────────────────────────────────────────────────
+// ── 音效（"叮"）───────────────────────────────────────────────
+function playDing(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type='sine';o.frequency.setValueAtTime(880,ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(660,ctx.currentTime+0.3);
+    g.gain.setValueAtTime(0.5,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.8);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+0.8);
+  }catch(e){}
+}
+
+// ── 續時功能（固定 NT$65 / 一個時段）────────────────────────
 async function addExtension(origId, nextSlot, nextSeg, dayIdx, bed){
-  // 再次確認下一格是否仍空閒
-  const latest=await fetch(`${SCRIPT_URL}?action=getBookings`).then(r=>r.json()).catch(()=>null);
+  const latest=await fetch(`${SCRIPT_URL}?action=getBookings&_t=${Date.now()}`).then(r=>r.json()).catch(()=>null);
   if(latest?.bookings){
     const fresh=latest.bookings.map(b=>({
-      bed:(b['床位']||''), segment:(b['時段區間']||''),
-      dayIdx:parseInt(b['日期索引'])||0, time:(b['時段']||''),
+      bed:(b['床位']||''),segment:(b['時段區間']||''),
+      dayIdx:parseInt(b['日期索引'])||0,time:(b['時段']||''),
       therapistName:(b['治療師名稱']||'')
     }));
-    const conflict=fresh.some(b=>b.bed===bed&&b.segment===nextSeg&&b.dayIdx===dayIdx&&b.time===nextSlot&&b.therapistName===currentName);
+    const conflict=fresh.some(b=>b.bed===bed&&b.segment===nextSeg&&b.dayIdx===dayIdx&&b.time===nextSlot);
     if(conflict){
       showToast('此時段已被預約，無法續時');
-      bookings=latest.bookings.map?.[Symbol.iterator]?latest.bookings:bookings;
       renderResult(currentName);
       return;
     }
   }
 
-  // 找原始預約資料
   const orig=bookings.find(b=>b.id===origId);
   if(!orig){showToast('找不到原始預約');return;}
 
-  if(!confirm(`確認為「${orig.recipient}」在 ${nextSlot} 續時？\n費用將額外加 NT$${orig.amount}。`))return;
+  if(!confirm(`確認為「${orig.recipient}」在 ${nextSlot} 續時一個時段？\n額外費用：NT$65`))return;
 
   showToast('正在新增續時預約...');
   const bk={
-    booker:orig.booker, bookerPhone:orig.bookerPhone||'', bookerFb:orig.bookerFb||'',
-    recipient:orig.recipient, recipientFb:orig.recipientFb||'',
-    parts:orig.parts, therapistName:orig.therapistName, therapistGender:orig.therapistGender||'',
-    bed:bed, segment:nextSeg, dayIdx:dayIdx, time:nextSlot,
-    amount:orig.amount, checkin:false, payment:'unpaid', type:'walkin',
-    contactMethod:orig.contactMethod||'fb', contactAccount:orig.contactAccount||'',
-    notified:false, notes:'【續時】原預約 '+origId
+    booker:orig.booker,bookerPhone:orig.bookerPhone||'',bookerFb:orig.bookerFb||'',
+    recipient:orig.recipient,recipientFb:orig.recipientFb||'',
+    parts:orig.parts,therapistName:orig.therapistName,therapistGender:orig.therapistGender||'',
+    bed:bed,segment:nextSeg,dayIdx:dayIdx,time:nextSlot,
+    amount:65,  // 固定 NT$65
+    checkin:false,payment:'unpaid',type:'walkin',
+    contactMethod:orig.contactMethod||'fb',contactAccount:orig.contactAccount||'',
+    notified:false,notes:'【續時】原預約 '+origId
   };
   const res=await apiPost({action:'addBooking',booking:bk});
   if(res?.success||res?.id){
     bookings.push({...bk,id:res?.id||('EXT'+Date.now())});
-    showToast(`續時成功！${orig.recipient} · ${nextSlot}`);
+    showToast(`✓ 續時成功！${orig.recipient} · ${nextSlot} · NT$65`);
     renderResult(currentName);
   }else{
     showToast('續時失敗，請重試');
@@ -302,16 +315,21 @@ async function addExtension(origId, nextSlot, nextSeg, dayIdx, bed){
 }
 
 // 靜默更新（不顯示 loading，避免干擾）
+let prevBookingCount=0;
 async function silentRefresh(){
   const url=SCRIPT_URL||'';
   if(!url||url==='在此貼上你的網址')return;
   try{
-    const bRes=await fetch(`${url}?action=getBookings`).then(r=>r.json());
+    const bRes=await fetch(`${url}?action=getBookings&_t=${Date.now()}`).then(r=>r.json());
     if(bRes?.bookings){
-      bookings=parseBk(bRes.bookings);
+      const newBk=parseBk(bRes.bookings);
+      // 有新預約時播放音效
+      if(prevBookingCount>0&&newBk.length>prevBookingCount)playDing();
+      prevBookingCount=newBk.length;
+      bookings=newBk;
       if(currentName)renderResult(currentName);
+      countdown=30;
     }
-    countdown=30;
   }catch(e){console.warn('自動更新失敗',e);}
 }
 
