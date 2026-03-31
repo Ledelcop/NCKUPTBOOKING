@@ -506,7 +506,11 @@ function renderAdmTable(){
   document.getElementById('adm-tbody').innerHTML=data.map(b=>{
     const disc=b.checkin?b.parts.length*DISC:0;
     const gLabel=b.therapistGender?`(${b.therapistGender})`:'';
-    return`<tr>
+    const isExt=b.notes&&b.notes.startsWith('【續時】');
+    const typeBadge=isExt
+      ?`<span class="badge" style="background:#F0E6FB;color:#6B2FA0;">續時</span>`
+      :`<span class="badge ${b.type==='online'?'badge-online':'badge-walkin'}">${b.type==='online'?'線上':'現場'}</span>`;
+    return`<tr ${isExt?'style="background:#FAF5FF;"':''}>
       <td style="font-size:12px;font-weight:500;">${b.id}</td>
       <td>${b.booker}</td><td>${b.recipient}</td>
       <td>${b.parts.map(p=>`<span class="badge-part">${p}</span>`).join('')}</td>
@@ -517,7 +521,7 @@ function renderAdmTable(){
       <td style="font-size:12px;color:${b.checkin?'var(--green-soft)':'var(--stone-light)'};">${b.checkin?`-$${disc}`:'—'}</td>
       <td><span class="badge ${b.payment==='paid'?'badge-paid':'badge-unpaid'}">${b.payment==='paid'?'已繳':'未繳'}</span></td>
       <td style="font-size:11px;color:${b.contactMethod==='manual'?'#5A2D82':b.notified?'var(--green-soft)':'var(--stone)'};">${cLabel(b.contactMethod)}${b.notified?' (已通知)':''}</td>
-      <td><span class="badge ${b.type==='online'?'badge-online':'badge-walkin'}">${b.type==='online'?'線上':'現場'}</span></td>
+      <td>${typeBadge}${isExt?`<div style="font-size:10px;color:#6B2FA0;margin-top:2px;">${b.notes}</div>`:''}</td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
         ${b.payment!=='paid'?`<button class="btn-sm-success" onclick="markPaid('${b.id}')">收款</button>`:''}
         ${!b.checkin?`<button class="btn-sm-neutral" onclick="markCk('${b.id}')">打卡</button>`:''}
@@ -643,15 +647,39 @@ renderAll();
 // 如果有網址，自動連線
 if(SCRIPT_URL)loadData();
 
+// ── 音效（"叮"）───────────────────────────────────────────────
+function playDing(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type='sine';o.frequency.setValueAtTime(880,ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(660,ctx.currentTime+0.3);
+    g.gain.setValueAtTime(0.5,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.8);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+0.8);
+  }catch(e){}
+}
+
 // 每 30 秒靜默更新
+let prevBookingCount=0;
 async function silentRefresh(){
   const url=SCRIPT_URL||localStorage.getItem('adminScriptUrl')||'';
   if(!url)return;
-  if(!SCRIPT_URL)SCRIPT_URL=url; // 確保 SCRIPT_URL 有值
+  if(!SCRIPT_URL)SCRIPT_URL=url;
   try{
-    const bRes=await fetch(`${url}?action=getBookings`).then(r=>r.json());
+    const bRes=await fetch(`${url}?action=getBookings&_t=${Date.now()}`).then(r=>r.json());
     if(bRes?.bookings){
-      bookings=parseBk(bRes.bookings);
+      const newBk=parseBk(bRes.bookings);
+      // 有新預約時播放音效並提示
+      if(prevBookingCount>0&&newBk.length>prevBookingCount){
+        playDing();
+        const diff=newBk.length-prevBookingCount;
+        showToast(`🔔 新增 ${diff} 筆預約！`,3000);
+      }
+      prevBookingCount=newBk.length;
+      bookings=newBk;
       renderStats();renderAdmSched();renderAdmTable();renderManualList();renderPayment();
     }
   }catch(e){console.warn('自動更新失敗',e);}
