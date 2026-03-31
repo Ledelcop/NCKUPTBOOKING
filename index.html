@@ -348,14 +348,31 @@ function rcSelectTh(i,t){
   recipients[i].selSlots=[];
   renderRecipientCard(i);
 }
+// 取得其他被傳情人在同一床同一段同一天已選的時段（用於衝突偵測）
+function getOtherSelSlots(skipIdx,bed,seg,dayIdx){
+  const used=new Set();
+  recipients.forEach((r,ri)=>{
+    if(ri===skipIdx)return;
+    if(r.selTh&&r.selTh.bed===bed&&r.selSeg===seg&&r.selDay===dayIdx)
+      r.selSlots.forEach(s=>used.add(s));
+  });
+  return used;
+}
+
 function rcSelectSlot(i,s){
   const r=recipients[i];
   const maxSlots=r.parts.length||1;
   if(r.selSlots.includes(s))return;
   if(r.selSlots.length>=maxSlots){showToast(`已選滿 ${maxSlots} 個時段（等於部位數）`);return;}
+  // 檢查是否與其他被傳情人時段重複（同一治療師床位）
+  if(r.selTh){
+    const otherUsed=getOtherSelSlots(i,r.selTh.bed,r.selSeg,r.selDay);
+    if(otherUsed.has(s)){showToast('此時段已被其他被傳情人選用，請選其他時段');return;}
+  }
   r.selSlots.push(s);
   updatePrice();
-  renderSlotArea(i);
+  // 重繪所有被傳情人的時段格（讓「其他人已選」即時反映）
+  recipients.forEach((_,ri)=>renderSlotArea(ri));
 }
 function rcDeselectSlot(i,s){
   const r=recipients[i];
@@ -363,7 +380,7 @@ function rcDeselectSlot(i,s){
   if(idx===r.selSlots.length-1)r.selSlots.pop();
   else showToast('只能移除最後選的時段');
   updatePrice();
-  renderSlotArea(i);
+  recipients.forEach((_,ri)=>renderSlotArea(ri));
 }
 
 // 只重新渲染時段格，不重建整張卡（保留 input 焦點）
@@ -400,6 +417,7 @@ function buildSlotAreaHTML(i,r){
   if(!r.selTh)return'<div style="color:var(--stone-light);font-size:13px;padding:8px 0;">請先選擇治療師</div>';
   const slots=SLOTS_BY_SEG[r.selSeg]||[];
   const bkd=getBkSlots(r.selTh.bed,r.selSeg,r.selDay);
+  const otherUsed=getOtherSelSlots(i,r.selTh.bed,r.selSeg,r.selDay);
   const maxSlots=r.parts.length||1;
   const selCount=r.selSlots.length;
   const isFull=selCount>=maxSlots;
@@ -409,16 +427,19 @@ function buildSlotAreaHTML(i,r){
   html+=`</div><div class="slots-grid">`;
   slots.forEach(s=>{
     const isB=bkd.includes(s);
+    const isOther=otherUsed.has(s); // 其他被傳情人已選
     const isSel=r.selSlots.includes(s);
     const lastSel=r.selSlots[r.selSlots.length-1];
     const slotIdx=slots.indexOf(s);
     const lastIdx=lastSel?slots.indexOf(lastSel):-1;
-    const canSelect=!isB&&!isFull&&(r.selSlots.length===0||(slotIdx===lastIdx+1));
+    const canSelect=!isB&&!isOther&&!isFull&&(r.selSlots.length===0||(slotIdx===lastIdx+1));
     if(isB){
-      // 改動1：只顯示「已預約」，不洩漏其他人姓名/部位
       html+=`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn booked">已預約</div></div>`;
     }else if(isSel){
       html+=`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn selected" onclick="rcDeselectSlot(${i},'${s}')">已選擇 ✕</div></div>`;
+    }else if(isOther){
+      // 其他被傳情人已佔用此時段（同治療師床位）
+      html+=`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn booked" style="background:#FFF3E0;border-color:rgba(184,149,90,0.4);color:#8B6914;">其他人已選</div></div>`;
     }else if(canSelect){
       html+=`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn available" onclick="rcSelectSlot(${i},'${s}')">可預約</div></div>`;
     }else if(isFull){
