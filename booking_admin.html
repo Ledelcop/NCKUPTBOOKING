@@ -345,7 +345,7 @@ let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrxTlaoBOVqh-EIJovrnq
 // schedule[dayIdx] = {bed: {segment: {name, gender}}}
 let schedule=[],rawGrid=[],bookings=[];
 let admDay=0,admFilter='all';
-let wiDay=0,wiSeg='19-20',wiThBed=null,wiSlot=null,wiCk=true;
+let wiDay=0,wiSeg='19-20',wiThBed=null,wiCk=true;
 
 function saveUrl(){
   const v=document.getElementById('url-input').value.trim();
@@ -503,32 +503,88 @@ function renderAdmTable(){
   else if(admFilter==='manual')data=data.filter(b=>b.contactMethod==='manual'&&!b.notified);
   else if(admFilter==='online')data=data.filter(b=>b.type==='online');
   else if(admFilter==='walkin')data=data.filter(b=>b.type==='walkin');
-  document.getElementById('adm-tbody').innerHTML=data.map(b=>{
-    const disc=b.checkin?b.parts.length*DISC:0;
-    const gLabel=b.therapistGender?`(${b.therapistGender})`:'';
+
+  // 合併同傳情人+被傳情人+床位+日期+時段區間的多筆（多部位合一行）
+  const groups=[];
+  const seen={};
+  data.forEach(b=>{
     const isExt=b.notes&&b.notes.startsWith('【續時】');
-    const typeBadge=isExt
-      ?`<span class="badge" style="background:#F0E6FB;color:#6B2FA0;">續時</span>`
-      :`<span class="badge ${b.type==='online'?'badge-online':'badge-walkin'}">${b.type==='online'?'線上':'現場'}</span>`;
-    return`<tr ${isExt?'style="background:#FAF5FF;"':''}>
-      <td style="font-size:12px;font-weight:500;">${b.id}</td>
-      <td>${b.booker}</td><td>${b.recipient}</td>
-      <td>${b.parts.map(p=>`<span class="badge-part">${p}</span>`).join('')}</td>
-      <td>${b.bed?`${b.bed}床 ${b.therapistName} ${gLabel}`.trim():'—'}<br><span style="font-size:10px;color:var(--stone);">${SEG_LABEL[b.segment]||b.segment||''}</span></td>
-      <td style="font-size:12px;">${DAYS[b.dayIdx]||''}</td>
-      <td style="font-size:11px;white-space:nowrap;">${b.time}</td>
-      <td>NT$${b.amount}</td>
-      <td style="font-size:12px;color:${b.checkin?'var(--green-soft)':'var(--stone-light)'};">${b.checkin?`-$${disc}`:'—'}</td>
-      <td><span class="badge ${b.payment==='paid'?'badge-paid':'badge-unpaid'}">${b.payment==='paid'?'已繳':'未繳'}</span></td>
-      <td style="font-size:11px;color:${b.contactMethod==='manual'?'#5A2D82':b.notified?'var(--green-soft)':'var(--stone)'};">${cLabel(b.contactMethod)}${b.notified?' (已通知)':''}</td>
-      <td>${typeBadge}${isExt?`<div style="font-size:10px;color:#6B2FA0;margin-top:2px;">${b.notes}</div>`:''}</td>
+    // 續時、手動備注等不合併，直接顯示
+    if(isExt){groups.push({type:'single',b});return;}
+    const key=`${b.booker}|${b.recipient}|${b.bed}|${b.segment}|${b.dayIdx}|${b.type}`;
+    if(seen[key]!==undefined){
+      const g=groups[seen[key]];
+      g.parts=[...new Set([...g.parts,...(b.parts||[])])];
+      g.slots.push(b.time);
+      g.amount=(g.amount||0)+(b.amount||0);
+      g.ids.push(b.id);
+      if(b.payment==='unpaid')g.payment='unpaid';
+    }else{
+      seen[key]=groups.length;
+      groups.push({type:'group',booker:b.booker,recipient:b.recipient,
+        parts:[...(b.parts||[])],bed:b.bed,therapistName:b.therapistName,
+        therapistGender:b.therapistGender,segment:b.segment,dayIdx:b.dayIdx,
+        slots:[b.time],amount:b.amount||0,checkin:b.checkin,payment:b.payment,
+        contactMethod:b.contactMethod,notified:b.notified,type:b.type,notes:b.notes,
+        ids:[b.id],id:b.id});
+    }
+  });
+
+  document.getElementById('adm-tbody').innerHTML=groups.map(g=>{
+    if(g.type==='single'){
+      const b=g.b;
+      const gLabel=b.therapistGender?`(${b.therapistGender})`:'';
+      return`<tr style="background:#FAF5FF;">
+        <td style="font-size:12px;font-weight:500;">${b.id}</td>
+        <td>${b.booker}</td><td>${b.recipient}</td>
+        <td>${(b.parts||[]).map(p=>`<span class="badge-part">${p}</span>`).join('')}</td>
+        <td>${b.bed?`${b.bed}床 ${b.therapistName} ${gLabel}`.trim():'—'}<br><span style="font-size:10px;color:var(--stone);">${SEG_LABEL[b.segment]||b.segment||''}</span></td>
+        <td style="font-size:12px;">${DAYS[b.dayIdx]||''}</td>
+        <td style="font-size:11px;white-space:nowrap;">${b.time}</td>
+        <td>NT$${b.amount}</td>
+        <td>—</td>
+        <td><span class="badge ${b.payment==='paid'?'badge-paid':'badge-unpaid'}">${b.payment==='paid'?'已繳':'未繳'}</span></td>
+        <td style="font-size:11px;color:${b.contactMethod==='manual'?'#5A2D82':b.notified?'var(--green-soft)':'var(--stone)'};">${cLabel(b.contactMethod)}${b.notified?' (已通知)':''}</td>
+        <td><span class="badge" style="background:#F0E6FB;color:#6B2FA0;">續時</span><div style="font-size:10px;color:#6B2FA0;margin-top:2px;">${b.notes}</div></td>
+        <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
+          ${b.payment!=='paid'?`<button class="btn-sm-success" onclick="markPaid('${b.id}')">收款</button>`:''}
+          ${!b.notified?`<button class="btn-sm-neutral" onclick="markNtf('${b.id}')">已通知</button>`:''}
+          <button class="btn-sm-neutral" onclick="delBk('${b.id}')">取消</button>
+        </div></td>
+      </tr>`;
+    }
+    // 合併群組
+    const gLabel=g.therapistGender?`(${g.therapistGender})`:'';
+    const disc=g.checkin?g.parts.length*DISC:0;
+    const slotsStr=g.slots.length>1?`${g.slots[0]} ~ ${g.slots[g.slots.length-1].split('-')[1]}`:(g.slots[0]||'');
+    return`<tr>
+      <td style="font-size:12px;font-weight:500;">${g.ids[0]}${g.ids.length>1?`<div style="font-size:9px;color:var(--stone-light);">+${g.ids.length-1}筆</div>`:''}</td>
+      <td>${g.booker}</td><td>${g.recipient}</td>
+      <td>${g.parts.map(p=>`<span class="badge-part">${p}</span>`).join('')}</td>
+      <td>${g.bed?`${g.bed}床 ${g.therapistName} ${gLabel}`.trim():'—'}<br><span style="font-size:10px;color:var(--stone);">${SEG_LABEL[g.segment]||g.segment||''}</span></td>
+      <td style="font-size:12px;">${DAYS[g.dayIdx]||''}</td>
+      <td style="font-size:11px;white-space:nowrap;">${slotsStr}</td>
+      <td>NT$${g.amount}</td>
+      <td style="font-size:12px;color:${g.checkin?'var(--green-soft)':'var(--stone-light)'};">${g.checkin?`-$${disc}`:'—'}</td>
+      <td><span class="badge ${g.payment==='paid'?'badge-paid':'badge-unpaid'}">${g.payment==='paid'?'已繳':'未繳'}</span></td>
+      <td style="font-size:11px;color:${g.contactMethod==='manual'?'#5A2D82':g.notified?'var(--green-soft)':'var(--stone)'};">${cLabel(g.contactMethod)}${g.notified?' (已通知)':''}</td>
+      <td><span class="badge ${g.type==='online'?'badge-online':'badge-walkin'}">${g.type==='online'?'線上':'現場'}</span></td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
-        ${b.payment!=='paid'?`<button class="btn-sm-success" onclick="markPaid('${b.id}')">收款</button>`:''}
-        ${!b.checkin?`<button class="btn-sm-neutral" onclick="markCk('${b.id}')">打卡</button>`:''}
-        ${!b.notified?`<button class="btn-sm-neutral" onclick="markNtf('${b.id}')">已通知</button>`:''}
-        <button class="btn-sm-neutral" onclick="delBk('${b.id}')">取消</button>
+        ${g.payment!=='paid'?`<button class="btn-sm-success" onclick="markGroupPaid(${JSON.stringify(g.ids)})">收款</button>`:''}
+        ${!g.checkin?`<button class="btn-sm-neutral" onclick="markCk('${g.id}')">打卡</button>`:''}
+        ${!g.notified?`<button class="btn-sm-neutral" onclick="markNtf('${g.id}')">已通知</button>`:''}
+        <button class="btn-sm-neutral" onclick="delGroupBk(${JSON.stringify(g.ids)})">取消</button>
       </div></td>
     </tr>`;}).join('');
+}
+async function markGroupPaid(ids){
+  for(const id of ids){const b=bookings.find(b=>b.id===id);if(b)b.payment='paid';await apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});}
+  renderAll();showToast(`收款完成（${ids.length} 筆）`);
+}
+async function delGroupBk(ids){
+  bookings=bookings.filter(b=>!ids.includes(b.id));
+  for(const id of ids)await apiPost({action:'deleteBooking',id});
+  renderAll();showToast('預約已取消');
 }
 async function markPaid(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.payment='paid';renderAll();await apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});showToast('收款完成');}
 async function markCk(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.checkin=true;renderAll();await apiPost({action:'updateBooking',id,field:'打卡折扣',value:'Y'});showToast('打卡折扣已套用');}
@@ -554,37 +610,64 @@ function renderPayment(){
 }
 
 // ── 現場報名 ──────────────────────────────────────────────────
-function selWiDay(idx,el){wiDay=idx;wiThBed=null;wiSlot=null;document.querySelectorAll('#wi-day-tabs .filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('wi-sel-display').textContent='';updateWiThOpts();renderWiSlots();}
-function selWiSeg(seg,el){wiSeg=seg;wiThBed=null;wiSlot=null;document.querySelectorAll('#wi-seg-toggle .toggle-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('wi-sel-display').textContent='';updateWiThOpts();renderWiSlots();}
 let wiContactMethod='fb';
+let wiSlots=[];
+function selWiDay(idx,el){wiDay=idx;wiThBed=null;wiSlots=[];document.querySelectorAll('#wi-day-tabs .filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('wi-sel-display').textContent='';updateWiThOpts();renderWiSlots();}
+function selWiSeg(seg,el){wiSeg=seg;wiThBed=null;wiSlots=[];document.querySelectorAll('#wi-seg-toggle .toggle-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('wi-sel-display').textContent='';updateWiThOpts();renderWiSlots();}
 function setWiContact(m,el){
   wiContactMethod=m;
-  document.querySelectorAll('[data-m]').forEach(o=>{
-    o.style.borderColor='var(--border)';o.style.background='var(--cream)';
-  });
+  document.querySelectorAll('[data-m]').forEach(o=>{o.style.borderColor='var(--border)';o.style.background='var(--cream)';});
   el.style.borderColor='var(--gold)';el.style.background='var(--gold-pale)';
   document.getElementById('wi-account-line').style.display=m==='line'?'block':'none';
   document.getElementById('wi-account-gmail').style.display=m==='gmail'?'block':'none';
 }
 function updateWiThOpts(){
   const ths=getTHforDaySeg(wiDay,wiSeg);
-  document.getElementById('wi-therapist').innerHTML='<option value="">— 請選擇治療師 —</option>'+ths.map(t=>'<option value="'+t.bed+'">'+t.bed+'床 · '+t.name+(t.gender?' ('+t.gender+')':'')+' </option>').join('');
+  document.getElementById('wi-therapist').innerHTML='<option value="">— 請選擇治療師 —</option>'+ths.map(t=>'<option value="'+t.bed+'">'+t.bed+'床 · '+t.name+(t.gender?' ('+t.gender+')':'')+'</option>').join('');
 }
+function getWiPartsCount(){return[...document.querySelectorAll('#wi-parts .part-btn.selected')].length;}
 function renderWiSlots(){
-  wiThBed=document.getElementById('wi-therapist').value||null;wiSlot=null;document.getElementById('wi-sel-display').textContent='';
+  wiThBed=document.getElementById('wi-therapist').value||null;
+  wiSlots=[];
+  document.getElementById('wi-sel-display').textContent='';
   const c=document.getElementById('wi-slots');
   if(!wiThBed){c.innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先選擇治療師</div>';return;}
   const slots=SLOTS_BY_SEG[wiSeg]||[];
   const bkd=getBkSlots(wiThBed,wiSeg,wiDay);
-  c.innerHTML=`<div class="slots-grid">${slots.map(s=>{const isB=bkd.includes(s);const bk=isB?getBkForSlot(wiThBed,wiSeg,wiDay,s):null;if(isB)return`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn booked">${bk?bk.recipient:'已預約'}</div></div>`;return`<div class="slot-row"><div class="slot-time-label">${s}</div><div class="slot-btn available" onclick="selWiSlot('${s}',this)">可預約</div></div>`;}).join('')}</div>`;
+  const needed=getWiPartsCount()||1;
+  let html='<div style="font-size:12px;color:var(--stone);margin-bottom:8px;">需選 '+needed+' 個連續時段（'+needed+' 個部位）</div><div class="slots-grid">';
+  slots.forEach((s,si)=>{
+    const isB=bkd.includes(s);
+    const isSel=wiSlots.includes(s);
+    const last=wiSlots[wiSlots.length-1];
+    const lastIdx=last?slots.indexOf(last):-1;
+    const canAdd=!isB&&!isSel&&(wiSlots.length===0||si===lastIdx+1)&&wiSlots.length<needed;
+    if(isB) html+='<div class="slot-row"><div class="slot-time-label">'+s+'</div><div class="slot-btn booked">已預約</div></div>';
+    else if(isSel) html+='<div class="slot-row"><div class="slot-time-label">'+s+'</div><div class="slot-btn selected" onclick="deselectWiSlot(''+s+'')">已選 ✕</div></div>';
+    else if(canAdd) html+='<div class="slot-row"><div class="slot-time-label">'+s+'</div><div class="slot-btn available" onclick="selectWiSlot(''+s+'')">可預約</div></div>';
+    else html+='<div class="slot-row"><div class="slot-time-label">'+s+'</div><div class="slot-btn" style="border:1.5px solid var(--border);background:var(--cream-dark);color:var(--stone-light);cursor:not-allowed;">'+(wiSlots.length>=needed?'已選滿':'請先選前一格')+'</div></div>';
+  });
+  html+='</div>';
+  c.innerHTML=html;
+  updateWiSelDisplay();
   updateWiPrice();
 }
-function selWiSlot(s,el){
-  wiSlot=s;
-  document.querySelectorAll('#wi-slots .slot-btn:not(.booked)').forEach(x=>{x.classList.remove('selected');x.classList.add('available');x.textContent='可預約';});
-  el.classList.remove('available');el.classList.add('selected');el.textContent='已選';
+function selectWiSlot(s){
+  const needed=getWiPartsCount()||1;
+  if(wiSlots.length>=needed){showToast('已選滿 '+needed+' 個時段');return;}
+  wiSlots.push(s);renderWiSlots();
+}
+function deselectWiSlot(s){
+  if(wiSlots[wiSlots.length-1]===s){wiSlots.pop();renderWiSlots();}
+  else showToast('只能移除最後選的時段');
+}
+function updateWiSelDisplay(){
   const todayTh=(schedule[wiDay]||{})[wiThBed]?.[wiSeg];
-  document.getElementById('wi-sel-display').textContent=`已選：${DAYS[wiDay]} ${s} · ${wiThBed}床 ${todayTh?.name||''} · ${SEG_LABEL[wiSeg]||wiSeg}`;
+  const needed=getWiPartsCount()||1;
+  const el=document.getElementById('wi-sel-display');
+  if(!el)return;
+  if(wiSlots.length===needed&&wiThBed) el.textContent='✓ '+wiThBed+'床 '+(todayTh?.name||'')+' · '+wiSlots[0]+'起 共'+wiSlots.length+'段';
+  else if(wiThBed) el.textContent=wiThBed+'床 · 還需選 '+(needed-wiSlots.length)+' 個時段';
 }
 function setWiCk(v,el){wiCk=v;document.querySelectorAll('#tab-walkin .toggle-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');updateWiPrice();}
 function updateWiPrice(){
@@ -596,6 +679,7 @@ function updateWiPrice(){
   let html='部位：'+parts.join('、')+' · NT$'+base;
   if(wiCk) html+=' <span style="color:var(--red-soft);">-NT$'+disc+'</span> = <strong>NT$'+(base-disc)+'</strong>';
   a.innerHTML=html;
+  if(wiThBed)renderWiSlots();
 }
 async function submitWalkin(){
   const bn=document.getElementById('wi-booker').value.trim(),bp=document.getElementById('wi-phone').value.trim(),rn=document.getElementById('wi-recipient').value.trim();
@@ -605,34 +689,36 @@ async function submitWalkin(){
   if(!bn||!bp||!rn){showToast('請填寫傳情人與被傳情人姓名');return;}
   if(!parts.length){showToast('請選擇至少一個部位');return;}
   if(!wiThBed){showToast('請選擇治療師');return;}
-  if(!wiSlot){showToast('請選擇時段');return;}
-  const base=parts.length*PRICE;
+  if(wiSlots.length<parts.length){showToast('還需選 '+(parts.length-wiSlots.length)+' 個時段');return;}
   const todayTh=(schedule[wiDay]||{})[wiThBed]?.[wiSeg];
   showLo('登記中...');
-  const bk={booker:bn,bookerPhone:bp,bookerFb:'',recipient:rn,recipientFb:'',
-    parts,therapistName:todayTh?.name||'',therapistGender:todayTh?.gender||'',
-    bed:wiThBed,segment:wiSeg,dayIdx:wiDay,time:wiSlot,
-    amount:base,checkin:wiCk,payment:'unpaid',type:'walkin',
-    contactMethod:cm,contactAccount:ca,notified:false,notes:'【現場報名】'};
-  const res=await apiPost({action:'addBooking',booking:bk});
-  bookings.push({...bk,id:res?.id||('L'+Date.now())});
+  for(let si=0;si<wiSlots.length;si++){
+    const s=wiSlots[si];
+    const bk={booker:bn,bookerPhone:bp,bookerFb:'',recipient:rn,recipientFb:'',
+      parts:[parts[si]||parts[0]],therapistName:todayTh?.name||'',therapistGender:todayTh?.gender||'',
+      bed:wiThBed,segment:wiSeg,dayIdx:wiDay,time:s,
+      amount:PRICE,checkin:wiCk,payment:'unpaid',type:'walkin',
+      contactMethod:cm,contactAccount:ca,notified:false,
+      notes:si===0?'【現場報名】':'【現場報名】第'+(si+1)+'部位'};
+    const res=await apiPost({action:'addBooking',booking:bk});
+    bookings.push({...bk,id:res?.id||('L'+Date.now()+si)});
+  }
   hideLo();
   ['wi-booker','wi-phone','wi-recipient'].forEach(id=>document.getElementById(id).value='');
   document.querySelectorAll('#wi-parts .part-btn.selected').forEach(e=>e.classList.remove('selected'));
-  wiSlot=null;wiThBed=null;document.getElementById('wi-therapist').value='';
+  wiSlots=[];wiThBed=null;document.getElementById('wi-therapist').value='';
   document.getElementById('wi-slots').innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先選擇治療師</div>';
   document.getElementById('wi-sel-display').textContent='';document.getElementById('wi-price').textContent='';
   document.getElementById('wi-contact-account-line').value='';
   document.getElementById('wi-contact-account-gmail').value='';
   document.getElementById('wi-account-line').style.display='none';
   document.getElementById('wi-account-gmail').style.display='none';
-  // 重置聯絡方式回 FB
   wiContactMethod='fb';
   document.querySelectorAll('[data-m]').forEach(o=>{o.style.borderColor='var(--border)';o.style.background='var(--cream)';});
   const fbOpt=document.querySelector('[data-m="fb"]');
   if(fbOpt){fbOpt.style.borderColor='var(--gold)';fbOpt.style.background='var(--gold-pale)';}
   renderAll();
-  showToast(`現場預約成功！${rn} · ${parts.join('、')} · NT$${base}`,4000);
+  showToast('現場預約成功！'+rn+' · '+parts.join('、')+' · NT$'+parts.length*PRICE,4000);
 }
 
 // ── Init ──────────────────────────────────────────────────────
