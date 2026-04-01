@@ -219,7 +219,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
     <!-- 人工傳訊待辦 -->
     <div class="card">
       <div class="card-title">人工傳訊待辦</div>
-      <div style="font-size:12px;color:var(--stone);margin-bottom:12px;">選擇「其他」聯絡方式的預約，需由工作人員手動聯繫</div>
+      <div style="font-size:12px;color:var(--stone);margin-bottom:12px;">選擇 Facebook Messenger 或 LINE 的預約，需由工作人員手動傳送通知</div>
       <div id="manual-list"></div>
     </div>
 
@@ -265,7 +265,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
                 <button class="toggle-btn" onclick="selWiSeg('20-21',this)">20:00—21:00（後段）</button>
               </div>
             </div>
-            <div class="form-group"><label class="required">治療師</label><select id="wi-therapist" onchange="renderWiSlots()"><option value="">— 請先選擇日期與時段 —</option></select></div>
+            <div class="form-group"><label class="required">治療師</label><select id="wi-therapist" onchange="wiSlots=[];renderWiSlots()"><option value="">— 請先選擇日期與時段 —</option></select></div>
             <div class="form-group">
               <label>聯絡方式</label>
               <div class="contact-opts" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;">
@@ -591,11 +591,86 @@ async function markCk(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.che
 async function markNtf(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.notified=true;renderAll();await apiPost({action:'updateBooking',id,field:'已通知',value:'Y'});showToast('已標記通知完成');}
 async function delBk(id){bookings=bookings.filter(b=>b.id!==id);renderAll();await apiPost({action:'deleteBooking',id});showToast('預約已取消');}
 
+function buildMsgText(b){
+  const DAY_LABELS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
+  const segLabel=b.segment==='19-20'?'前段 19:00—20:00':'後段 20:00—21:00';
+  return `【筋夾！？皮洽鬆？傳情通知】
+有人傳情給你！
+
+被傳情人：${b.recipient}
+部位：${(b.parts||[]).join('、')}
+日期：${DAY_LABELS[b.dayIdx]||''} ${segLabel}
+時間：${b.time||''}
+治療師：${b.therapistName||''}（${b.bed||''}床）
+地點：醫學院 104 多功能實習教室
+
+費用由傳情人支付，準時到場即可 ✨`;
+}
+
+function copyMsg(id){
+  const b=bookings.find(b=>b.id===id);
+  if(!b)return;
+  navigator.clipboard.writeText(buildMsgText(b)).then(()=>showToast('訊息已複製，可直接貼上傳送'));
+}
+
 function renderManualList(){
-  const list=bookings.filter(b=>b.contactMethod==='manual'&&!b.notified);
+  // 篩選 fb（Messenger）和 line 且未通知的
+  const fbList=bookings.filter(b=>(b.contactMethod==='fb'||b.contactMethod==='manual')&&!b.notified);
+  const lineList=bookings.filter(b=>b.contactMethod==='line'&&!b.notified);
   const c=document.getElementById('manual-list');
-  if(!list.length){c.innerHTML='<div style="color:var(--stone-light);font-size:13px;">目前無待辦人工傳訊</div>';return;}
-  c.innerHTML=`<div style="overflow-x:auto;"><table class="manual-table"><thead><tr><th>#</th><th>傳情人</th><th>被傳情人</th><th>部位</th><th>日期 / 時段</th><th>治療師</th><th>操作</th></tr></thead><tbody>${list.map(b=>`<tr><td style="font-size:12px;">${b.id}</td><td>${b.booker}<br><span style="font-size:11px;color:var(--stone);">${b.bookerPhone||''}</span></td><td>${b.recipient}</td><td>${b.parts.join('、')}</td><td style="font-size:12px;">${DAYS[b.dayIdx]||''}<br>${b.time}</td><td>${b.bed?`${b.bed}床 ${b.therapistName}`:'—'}</td><td><button class="btn-sm-success" onclick="markNtf('${b.id}')">已通知</button></td></tr>`).join('')}</tbody></table></div>`;
+
+  if(!fbList.length&&!lineList.length){
+    c.innerHTML='<div style="color:var(--stone-light);font-size:13px;">目前無待辦人工傳訊 ✓</div>';
+    return;
+  }
+
+  const cardStyle='border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--cream);';
+  const metaStyle='font-size:12px;color:var(--stone);margin-top:4px;';
+  const btnStyle='padding:6px 12px;border-radius:6px;font-size:12px;font-family:\'Noto Sans TC\',sans-serif;cursor:pointer;border:1px solid;transition:all 0.15s;';
+
+  function renderCard(b){
+    const DAY_LABELS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
+    const segLabel=b.segment==='19-20'?'前段':'後段';
+    const isFb=b.contactMethod==='fb'||b.contactMethod==='manual';
+    const fbUrl=b.recipientFb||'';
+    const lineId=b.contactAccount||'';
+
+    return`<div style="${cardStyle}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;color:var(--ink);">${b.recipient}</div>
+          <div style="${metaStyle}">${(b.parts||[]).join('、')} · ${DAY_LABELS[b.dayIdx]||''} ${segLabel} ${b.time||''} · ${b.therapistName||''}（${b.bed||''}床）</div>
+          <div style="${metaStyle}">傳情人：${b.booker}${b.bookerPhone?' · '+b.bookerPhone:''}</div>
+          ${isFb&&fbUrl?`<div style="font-size:11px;color:var(--stone-light);margin-top:2px;word-break:break-all;">FB：${fbUrl}</div>`:''}
+          ${!isFb&&lineId?`<div style="font-size:11px;color:var(--stone-light);margin-top:2px;">LINE ID：${lineId}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+          <button onclick="copyMsg('${b.id}')" style="${btnStyle}background:var(--cream);border-color:var(--border);color:var(--ink-soft);">📋 複製訊息</button>
+          ${isFb&&fbUrl?`<a href="${fbUrl}" target="_blank" style="${btnStyle}background:#1877F2;border-color:#1877F2;color:#fff;text-decoration:none;display:block;text-align:center;">開啟 Messenger</a>`:''}
+          ${!isFb&&lineId?`<a href="https://line.me/ti/p/~${lineId}" target="_blank" style="${btnStyle}background:#06C755;border-color:#06C755;color:#fff;text-decoration:none;display:block;text-align:center;">開啟 LINE</a>`:''}
+          <button onclick="markNtf('${b.id}')" style="${btnStyle}background:var(--green-soft);border-color:var(--green-soft);color:#fff;">✓ 已傳送</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  let html='';
+
+  if(fbList.length){
+    html+=`<div style="font-size:11px;font-weight:500;color:#1877F2;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;margin-top:4px;">
+      Facebook Messenger（${fbList.length} 筆待傳）
+    </div>`;
+    html+=fbList.map(renderCard).join('');
+  }
+
+  if(lineList.length){
+    html+=`<div style="font-size:11px;font-weight:500;color:#06C755;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;margin-top:${fbList.length?'16px':'4px'};">
+      LINE（${lineList.length} 筆待傳）
+    </div>`;
+    html+=lineList.map(renderCard).join('');
+  }
+
+  c.innerHTML=html;
 }
 
 function renderPayment(){
@@ -628,7 +703,7 @@ function updateWiThOpts(){
 function getWiPartsCount(){return[...document.querySelectorAll('#wi-parts .part-btn.selected')].length;}
 function renderWiSlots(){
   wiThBed=document.getElementById('wi-therapist').value||null;
-  wiSlots=[];
+  // 注意：不在這裡清空 wiSlots，只有換治療師/日期/時段時才清空
   document.getElementById('wi-sel-display').textContent='';
   const c=document.getElementById('wi-slots');
   if(!wiThBed){c.innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先選擇治療師</div>';return;}
