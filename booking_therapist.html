@@ -294,8 +294,6 @@ async function addExtension(origId, nextSlot, nextSeg, dayIdx, bed){
   const orig=bookings.find(b=>b.id===origId);
   if(!orig){showToast('找不到原始預約');return;}
 
-  if(!confirm(`確認為「${orig.recipient}」在 ${nextSlot} 續時一個時段？\n額外費用：NT$65`))return;
-
   showToast('正在新增續時預約...');
   const bk={
     booker:orig.booker,bookerPhone:orig.bookerPhone||'',bookerFb:orig.bookerFb||'',
