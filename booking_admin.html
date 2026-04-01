@@ -205,6 +205,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
           <div class="filter-btn" onclick="filterAdm('unpaid',this)">未繳費</div>
           <div class="filter-btn" onclick="filterAdm('online',this)">線上</div>
           <div class="filter-btn" onclick="filterAdm('walkin',this)">現場</div>
+          <div class="filter-btn" onclick="filterAdm('ext',this)">續時</div>
         </div>
       </div>
       <div style="overflow-x:auto;">
@@ -265,11 +266,17 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
                 <div class="contact-opt" data-m="line" onclick="setWiContact('line',this)" style="border:1.5px solid var(--border);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--cream);">LINE<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">工作人員通知</div></div>
                 <div class="contact-opt" data-m="gmail" onclick="setWiContact('gmail',this)" style="border:1.5px solid var(--border);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--cream);">Gmail<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">自動發送通知信</div></div>
               </div>
+              <div id="wi-account-fb" style="margin-top:8px;">
+                <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">被傳情人 Facebook 連結（當天現場報名可填 o）</label>
+                <input type="text" id="wi-contact-account-fb" placeholder="https://facebook.com/...">
+              </div>
               <div id="wi-account-line" style="display:none;margin-top:8px;">
-                <input type="text" id="wi-contact-account-line" placeholder="被傳情人 LINE ID（當天現場報名填 o）">
+                <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">被傳情人 LINE ID（當天現場報名可填 o）</label>
+                <input type="text" id="wi-contact-account-line" placeholder="LINE ID">
               </div>
               <div id="wi-account-gmail" style="display:none;margin-top:8px;">
-                <input type="email" id="wi-contact-account-gmail" placeholder="被傳情人 Email（當天現場報名填 o）">
+                <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">被傳情人 Email（當天現場報名可填 o）</label>
+                <input type="text" id="wi-contact-account-gmail" placeholder="email@example.com">
               </div>
             </div>
             <div class="form-group">
@@ -516,6 +523,7 @@ function renderAdmTable(){
   else if(admFilter==='manual')data=data.filter(b=>b.contactMethod==='manual'&&!b.notified);
   else if(admFilter==='online')data=data.filter(b=>b.type==='online');
   else if(admFilter==='walkin')data=data.filter(b=>b.type==='walkin');
+  else if(admFilter==='ext')data=data.filter(b=>b.notes&&b.notes.startsWith('【續時】'));
 
   // 合併同傳情人+被傳情人+床位+日期+時段區間的多筆（多部位合一行）
   const groups=[];
@@ -581,7 +589,7 @@ function renderAdmTable(){
       <td><span class="badge ${g.type==='online'?'badge-online':'badge-walkin'}">${g.type==='online'?'線上':'現場'}</span></td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
         ${g.payment!=='paid'?`<button class="btn-sm-success" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="markGroupPaid(JSON.parse(this.dataset.ids))">收款</button>`:''}
-        ${!g.checkin?`<button class="btn-sm-neutral" onclick="markCk('${g.id}')">打卡</button>`:''}
+        ${!g.checkin?`<button class="btn-sm-neutral" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="markGroupCk(JSON.parse(this.dataset.ids))">打卡</button>`:''}
         <button class="btn-sm-neutral" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="delGroupBk(JSON.parse(this.dataset.ids))">取消</button>
       </div></td>
     </tr>`;}).join('');
@@ -589,6 +597,10 @@ function renderAdmTable(){
 async function markGroupPaid(ids){
   for(const id of ids){const b=bookings.find(b=>b.id===id);if(b)b.payment='paid';apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});}
   renderAll();showToast('收款完成（'+ids.length+' 筆）');
+}
+async function markGroupCk(ids){
+  for(const id of ids){const b=bookings.find(b=>b.id===id);if(b)b.checkin=true;apiPost({action:'updateBooking',id,field:'打卡折扣',value:'Y'});}
+  renderAll();showToast('打卡折扣已套用（'+ids.length+' 筆）');
 }
 async function delGroupBk(ids){
   bookings=bookings.filter(b=>!ids.includes(b.id));
@@ -601,10 +613,26 @@ async function markNtf(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.no
 async function delBk(id){bookings=bookings.filter(b=>b.id!==id);renderAll();apiPost({action:'deleteBooking',id});showToast('預約已取消');}
 
 function renderPayment(){
-  // 已繳費金額：有打卡的用打卡後金額（65-5=60），沒打卡的用原價
-  const paid=bookings.filter(b=>b.payment==='paid').reduce((s,b)=>s+(b.checkin?b.amount-b.parts.length*DISC:b.amount),0);
-  const unpaid=bookings.filter(b=>b.payment==='unpaid').reduce((s,b)=>s+(b.checkin?b.amount-b.parts.length*DISC:b.amount),0);
-  const disc=bookings.filter(b=>b.checkin).reduce((s,b)=>s+b.parts.length*DISC,0);
+  // 以合併群組為單位計算金額（同傳情人+被傳情人+床+日期+時段）
+  const groupMap={};
+  bookings.forEach(b=>{
+    if(b.notes&&b.notes.startsWith('【續時】'))return; // 續時單獨計算
+    const key=`${b.booker}|${b.recipient}|${b.bed}|${b.segment}|${b.dayIdx}`;
+    if(!groupMap[key])groupMap[key]={parts:[],checkin:false,payment:b.payment,amount:0};
+    const g=groupMap[key];
+    g.parts=[...new Set([...g.parts,...(b.parts||[])])];
+    g.checkin=g.checkin||b.checkin;
+    if(b.payment==='unpaid')g.payment='unpaid';
+    g.amount+=(b.amount||0);
+  });
+  const groups=Object.values(groupMap);
+  // 加回續時（不合併）
+  bookings.filter(b=>b.notes&&b.notes.startsWith('【續時】')).forEach(b=>{
+    groups.push({parts:b.parts||[],checkin:b.checkin,payment:b.payment,amount:b.amount||0});
+  });
+  const paid=groups.filter(g=>g.payment==='paid').reduce((s,g)=>s+(g.checkin?g.amount-g.parts.length*DISC:g.amount),0);
+  const unpaid=groups.filter(g=>g.payment==='unpaid').reduce((s,g)=>s+(g.checkin?g.amount-g.parts.length*DISC:g.amount),0);
+  const disc=groups.filter(g=>g.checkin).reduce((s,g)=>s+g.parts.length*DISC,0);
   document.getElementById('payment-summary').innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
     <div style="background:var(--green-pale);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--green-soft);letter-spacing:0.08em;margin-bottom:6px;text-transform:uppercase;">已收款</div><div style="font-size:22px;font-weight:500;color:var(--green-soft);">NT$${paid.toLocaleString()}</div></div>
     <div style="background:var(--red-pale);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--red-soft);letter-spacing:0.08em;margin-bottom:6px;text-transform:uppercase;">待收款</div><div style="font-size:22px;font-weight:500;color:var(--red-soft);">NT$${unpaid.toLocaleString()}</div></div>
@@ -621,6 +649,7 @@ function setWiContact(m,el){
   wiContactMethod=m;
   document.querySelectorAll('[data-m]').forEach(o=>{o.style.borderColor='var(--border)';o.style.background='var(--cream)';});
   el.style.borderColor='var(--gold)';el.style.background='var(--gold-pale)';
+  document.getElementById('wi-account-fb').style.display=m==='fb'?'block':'none';
   document.getElementById('wi-account-line').style.display=m==='line'?'block':'none';
   document.getElementById('wi-account-gmail').style.display=m==='gmail'?'block':'none';
 }
@@ -687,7 +716,7 @@ async function submitWalkin(){
   const bn=document.getElementById('wi-booker').value.trim(),bp=document.getElementById('wi-phone').value.trim(),rn=document.getElementById('wi-recipient').value.trim();
   const parts=[...document.querySelectorAll('#wi-parts .part-btn.selected')].map(e=>e.textContent);
   const cm=wiContactMethod||'fb';
-  const ca=cm==='line'?(document.getElementById('wi-contact-account-line').value.trim()):cm==='gmail'?(document.getElementById('wi-contact-account-gmail').value.trim()):'';
+  const ca=cm==='line'?(document.getElementById('wi-contact-account-line').value.trim()):cm==='gmail'?(document.getElementById('wi-contact-account-gmail').value.trim()):(document.getElementById('wi-contact-account-fb').value.trim());
   if(!bn||!bp||!rn){showToast('請填寫傳情人與被傳情人姓名');return;}
   if(!parts.length){showToast('請選擇至少一個部位');return;}
   if(!wiThBed){showToast('請選擇治療師');return;}
@@ -711,8 +740,10 @@ async function submitWalkin(){
   wiSlots=[];wiThBed=null;document.getElementById('wi-therapist').value='';
   document.getElementById('wi-slots').innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先選擇治療師</div>';
   document.getElementById('wi-sel-display').textContent='';document.getElementById('wi-price').textContent='';
+  document.getElementById('wi-contact-account-fb').value='';
   document.getElementById('wi-contact-account-line').value='';
   document.getElementById('wi-contact-account-gmail').value='';
+  document.getElementById('wi-account-fb').style.display='block';
   document.getElementById('wi-account-line').style.display='none';
   document.getElementById('wi-account-gmail').style.display='none';
   wiContactMethod='fb';
