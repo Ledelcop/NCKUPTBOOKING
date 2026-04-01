@@ -371,13 +371,16 @@ async function loadData(){
 function apiFetch(a){return fetch(`${SCRIPT_URL}?action=${a}`).then(r=>r.json());}
 function apiPost(d){return fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({...d,secret:SECRET_KEY})}).then(r=>r.json()).catch(()=>null);}
 function parseBk(arr){return arr.map(b=>({
-  id:b['編號'],booker:b['傳情人'],bookerPhone:b['電話'],recipient:b['被傳情人'],
+  id:b['編號'],booker:b['傳情人'],bookerPhone:b['電話']||'',
+  bookerFb:b['傳情人FB']||'',recipient:b['被傳情人'],
+  recipientFb:b['被傳情人FB']||'',
   parts:typeof b['部位']==='string'?b['部位'].split(',').filter(Boolean):(b['部位']||[]),
   therapistName:b['治療師名稱']||'',therapistGender:b['性別']||'',
   bed:b['床位']||'',segment:b['時段區間']||'',
   dayIdx:parseInt(b['日期索引'])||0,time:b['時段'],
   amount:parseInt(b['金額'])||0,checkin:b['打卡折扣']==='Y',
   payment:b['繳費狀態']||'unpaid',contactMethod:b['聯絡方式']||'fb',
+  contactAccount:b['聯絡帳號']||'',
   notified:b['已通知']==='Y',type:b['類型']||'online',notes:b['備注']||''
 }));}
 function setConn(s,t){document.getElementById('conn-dot').className='conn-dot'+(s==='ok'?' ok':s==='err'?' err':'');document.getElementById('conn-text').textContent=t;}
@@ -642,12 +645,13 @@ function renderManualList(){
           <div style="${metaStyle}">${(b.parts||[]).join('、')} · ${DAY_LABELS[b.dayIdx]||''} ${segLabel} ${b.time||''} · ${b.therapistName||''}（${b.bed||''}床）</div>
           <div style="${metaStyle}">傳情人：${b.booker}${b.bookerPhone?' · '+b.bookerPhone:''}</div>
           ${isFb&&fbUrl?`<div style="font-size:11px;color:var(--stone-light);margin-top:2px;word-break:break-all;">FB：${fbUrl}</div>`:''}
-          ${!isFb&&lineId?`<div style="font-size:11px;color:var(--stone-light);margin-top:2px;">LINE ID：${lineId}</div>`:''}
+          ${!isFb&&lineId?`<div style="font-size:11px;color:var(--stone-light);margin-top:2px;">LINE ID：<strong>${lineId}</strong></div>`:''}
+          ${!isFb&&!lineId?`<div style="font-size:11px;color:var(--red-soft);margin-top:2px;">未填 LINE ID，請人工查詢</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
           <button onclick="copyMsg('${b.id}')" style="${btnStyle}background:var(--cream);border-color:var(--border);color:var(--ink-soft);">📋 複製訊息</button>
-          ${isFb&&fbUrl?`<a href="${fbUrl}" target="_blank" style="${btnStyle}background:#1877F2;border-color:#1877F2;color:#fff;text-decoration:none;display:block;text-align:center;">開啟 Messenger</a>`:''}
-          ${!isFb&&lineId?`<a href="https://line.me/ti/p/~${lineId}" target="_blank" style="${btnStyle}background:#06C755;border-color:#06C755;color:#fff;text-decoration:none;display:block;text-align:center;">開啟 LINE</a>`:''}
+          ${isFb?`<a href="${fbUrl||'https://www.facebook.com'}" target="_blank" style="${btnStyle}background:#1877F2;border-color:#1877F2;color:#fff;text-decoration:none;display:block;text-align:center;">${fbUrl?'開啟 Messenger':'搜尋 FB'}</a>`:''}
+          ${!isFb?`<a href="${lineId?'https://line.me/ti/p/~'+lineId:'https://line.me'}" target="_blank" style="${btnStyle}background:#06C755;border-color:#06C755;color:#fff;text-decoration:none;display:block;text-align:center;">${lineId?'開啟 LINE':'LINE 首頁'}</a>`:''}
           <button onclick="markNtf('${b.id}')" style="${btnStyle}background:var(--green-soft);border-color:var(--green-soft);color:#fff;">✓ 已傳送</button>
         </div>
       </div>
