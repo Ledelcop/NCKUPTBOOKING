@@ -581,18 +581,31 @@ function renderAdmTable(){
     </tr>`;}).join('');
 }
 async function markGroupPaid(ids){
+  if(!confirm('確認收款？共 '+ids.length+' 筆預約'))return;
   for(const id of ids){const b=bookings.find(b=>b.id===id);if(b)b.payment='paid';await apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});}
-  renderAll();showToast(`收款完成（${ids.length} 筆）`);
+  renderAll();showToast('收款完成（'+ids.length+' 筆）');
 }
 async function delGroupBk(ids){
+  if(!confirm('確認取消預約？共 '+ids.length+' 筆，此操作無法復原'))return;
   bookings=bookings.filter(b=>!ids.includes(b.id));
   for(const id of ids)await apiPost({action:'deleteBooking',id});
   renderAll();showToast('預約已取消');
 }
-async function markPaid(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.payment='paid';renderAll();await apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});showToast('收款完成');}
+async function markPaid(id){
+  if(!confirm('確認收款？'))return;
+  const b=bookings.find(b=>b.id===id);if(!b)return;
+  b.payment='paid';renderAll();
+  await apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});
+  showToast('收款完成');
+}
 async function markCk(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.checkin=true;renderAll();await apiPost({action:'updateBooking',id,field:'打卡折扣',value:'Y'});showToast('打卡折扣已套用');}
 async function markNtf(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.notified=true;renderAll();await apiPost({action:'updateBooking',id,field:'已通知',value:'Y'});showToast('已標記通知完成');}
-async function delBk(id){bookings=bookings.filter(b=>b.id!==id);renderAll();await apiPost({action:'deleteBooking',id});showToast('預約已取消');}
+async function delBk(id){
+  if(!confirm('確認取消這筆預約？此操作無法復原'))return;
+  bookings=bookings.filter(b=>b.id!==id);renderAll();
+  await apiPost({action:'deleteBooking',id});
+  showToast('預約已取消');
+}
 
 function buildMsgText(b){
   const DAY_LABELS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
