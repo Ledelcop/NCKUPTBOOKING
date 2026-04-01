@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>筋夾！？皮洽鬆？ · 傳情預約</title>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<title id="page-title">筋夾！？皮洽鬆？ · 傳情預約</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--gold:#B8955A;--gold-light:#D4B483;--gold-pale:#F5EDD8;--ink:#1A1814;--ink-soft:#3D3830;--stone:#7A7168;--stone-light:#ADA49B;--cream:#FAF7F2;--cream-dark:#F0EBE0;--white:#FFFFFF;--red-soft:#C0392B;--red-pale:#FCEAEA;--green-soft:#27AE60;--green-pale:#E8F5EE;--border:rgba(184,149,90,0.25);--border-light:rgba(184,149,90,0.12);--shadow:0 2px 20px rgba(26,24,20,0.06);--shadow-md:0 4px 32px rgba(26,24,20,0.10);}
@@ -119,28 +118,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
   <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:var(--ink);margin-bottom:3px;letter-spacing:0.04em;">傳情預約 · 線上報名</div>
   <div style="font-size:13px;color:var(--stone);margin-bottom:20px;">每人最多傳情給 3 位被傳情人，請依步驟填寫</div>
 
-  <div class="info-banner">
-    <div style="font-size:12px;font-weight:500;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:12px;">成大物治週 · 軟組織放鬆 活動資訊</div>
-    <div class="info-grid">
-      <div>
-        <div class="info-item"><span class="info-label">價格</span><span class="info-value">NT$65 / 部位，FB / IG 打卡可折 $5</span></div>
-        <div class="info-item"><span class="info-label">時長</span><span class="info-value">10 分鐘 / 部位</span></div>
-        <div class="info-item"><span class="info-label">活動日期</span><span class="info-value">5/11(一) — 5/15(五)，19:00—21:00</span></div>
-        <div class="info-item"><span class="info-label">地點</span><span class="info-value">醫學院 104 多功能實習教室</span></div>
-      </div>
-      <div>
-        <div class="info-item"><span class="info-label">網路繳費</span><span class="info-value">5/4(一) — 5/6(三)，逾期取消資格</span></div>
-        <div class="info-item"><span class="info-label">現場繳費</span><span class="info-value">5/4(一) — 5/8(五)，12—13時 / 17—18時</span></div>
-        <div class="info-item"><span class="info-label">放鬆部位</span><span class="info-value"><span class="tag">上肢</span><span class="tag">下肢</span><span class="tag">背部</span><span class="tag">肩頸</span></span></div>
-      </div>
-    </div>
-    <hr class="info-divider">
-    <div class="notice-list">
-      <span>1. 表單需填寫傳情人與被傳情人臉書連結，可先複製好。此份表單最多可傳給三位被傳情人。</span>
-      <span>2. 選幾個部位就占幾個時段，每個時段 10 分鐘。每位被傳情人可各自選擇不同治療師和時段。</span>
-      <span>3. 背部不含頸部後面。傳情相關事項聯絡會透過臉書。</span>
-    </div>
-  </div>
+  <div class="info-banner" id="info-banner"></div>
 
   <!-- 步驟一 -->
   <div class="card">
@@ -203,10 +181,35 @@ const ALL_SLOTS=buildSlots();
 const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
 
 // ↓↓↓ 把你的 Apps Script 網址貼在這裡（只需填一次）↓↓↓
-let SCRIPT_URL='https://script.google.com/macros/s/AKfycbzrxTlaoBOVqh-EIJovrnqZL0UQ7wd-9ksaqewEGyVI7lWiwRuwCJEHkFFQZGSKPzFU6g/exec';
-// ↓↓↓ 必須與 Apps Script 裡的 SECRET_KEY 完全一致 ↓↓↓
-const SECRET_KEY='DCPT116';
-// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+// ================================================================
+// ⚙️ 設定區 — 所有需要修改的內容都在這裡
+// ================================================================
+
+// 【必填】Apps Script 網址
+let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrxTlaoBOVqh-EIJovrnqZL0UQ7wd-9ksaqewEGyVI7lWiwRuwCJEHkFFQZGSKPzFU6g/exec';
+
+// 【必填】安全密鑰，必須與 Apps Script 裡的 SECRET_KEY 一致
+const SECRET_KEY = 'DCPT116';
+
+// 【活動資訊】顯示在表單頂部的活動說明
+const CFG = {
+  activityName:  '筋夾！？皮洽鬆？',          // 活動名稱
+  subtitle:      '軟組織放鬆 · 傳情預約',      // 副標題
+  price:         65,                            // 每部位價格
+  discount:      5,                             // 打卡折扣
+  slotMin:       10,                            // 每時段分鐘數
+  dates:         '5/11(一) — 5/15(五)',         // 活動日期
+  time:          '19:00—21:00',                 // 活動時間
+  location:      '醫學院 104 多功能實習教室',   // 活動地點
+  payOnline:     '5/4(一) — 5/6(三)，逾期取消資格',  // 網路繳費期限
+  payOnsite:     '5/4(一) — 5/8(五)，12—13時 / 17—18時', // 現場繳費
+  payLocation:   '醫學院 104 多功能實習教室前',  // 繳費地點
+  notice1:       '表單需填寫傳情人與被傳情人臉書連結，可先複製好。此份表單最多可傳給三位被傳情人。',
+  notice2:       '選幾個部位就占幾個時段，每個時段 10 分鐘。每位被傳情人可各自選擇不同治療師和時段。',
+  notice3:       '背部不含頸部後面。傳情相關事項聯絡會透過臉書。',
+};
+
+// ================================================================
 
 // schedule[dayIdx] = {bed: {seg: {name,gender}}}
 let schedule=[];
@@ -374,9 +377,9 @@ function renderRecipientCard(r,i){
     <div class="rc-section">
       <div class="rc-section-label">通知被傳情人的聯絡方式</div>
       <div class="contact-opts">
-        <div class="contact-opt ${r.contactMethod==='fb'?'selected':''}" onclick="setContact(${i},'fb')">Facebook<div class="contact-opt-sub">Messenger（工作人員代傳）</div></div>
-        <div class="contact-opt ${r.contactMethod==='line'?'selected':''}" onclick="setContact(${i},'line')">LINE<div class="contact-opt-sub">人工傳送</div></div>
-        <div class="contact-opt ${r.contactMethod==='gmail'?'selected':''}" onclick="setContact(${i},'gmail')">Gmail<div class="contact-opt-sub">人工傳送</div></div>
+        <div class="contact-opt ${r.contactMethod==='fb'?'selected':''}" onclick="setContact(${i},'fb')">Facebook<div class="contact-opt-sub">Messenger（工作人員代為通知）</div></div>
+        <div class="contact-opt ${r.contactMethod==='line'?'selected':''}" onclick="setContact(${i},'line')">LINE<div class="contact-opt-sub">工作人員以 LINE 通知</div></div>
+        <div class="contact-opt ${r.contactMethod==='gmail'?'selected':''}" onclick="setContact(${i},'gmail')">Gmail<div class="contact-opt-sub">系統自動發送通知信</div></div>
       </div>
       ${r.contactMethod==='line'?`<div style="margin-top:8px;"><label style="font-size:12px;color:var(--stone);font-weight:500;">LINE ID</label><input type="text" value="${r.contactAccount||''}" oninput="updContactAcc(${i},this.value)" placeholder="被傳情人的 LINE ID" style="margin-top:5px;"></div>`:''}
       ${r.contactMethod==='gmail'?`<div style="margin-top:8px;"><label style="font-size:12px;color:var(--stone);font-weight:500;">Email</label><input type="email" value="${r.contactAccount||''}" oninput="updContactAcc(${i},this.value)" placeholder="被傳情人的 Email" style="margin-top:5px;"></div>`:''}
@@ -542,17 +545,7 @@ async function submitBooking(){
       </div>
     </div>`;
 
-  // EmailJS
-  const EMAILJS_SERVICE='your_service_id';
-  const EMAILJS_TEMPLATE='your_template_id';
-  const EMAILJS_KEY='your_public_key';
-  if(EMAILJS_SERVICE!=='your_service_id'){
-    emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{
-      to_email:be,booker_name:bn,
-      details:submittedBookings.map(r=>`${r.name}：${r.parts.join('、')}，${DAYS[r.selDay]} ${r.selSlots[0]}，${r.selTh.name}（${r.selTh.bed}床）`).join('\n'),
-      total:`NT$${totalAmt}`
-    },EMAILJS_KEY).catch(()=>{});
-  }
+  // Email 確認信由 Apps Script 自動發送，不需要在前端處理
 }
 
 // ── 自動更新 ─────────────────────────────────────────────────
@@ -565,8 +558,37 @@ async function silentRefresh(){
 }
 
 // ── 初始化 ────────────────────────────────────────────────────
+// 渲染活動資訊橫幅
+function renderBanner(){
+  const b=document.getElementById('info-banner');
+  if(!b)return;
+  document.title=CFG.activityName+' · 傳情預約';
+  b.innerHTML=`
+    <div style="font-size:12px;font-weight:500;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:12px;">成大物治週 · 軟組織放鬆 活動資訊</div>
+    <div class="info-grid">
+      <div>
+        <div class="info-item"><span class="info-label">價格</span><span class="info-value">NT$${CFG.price} / 部位，FB / IG 打卡可折 $${CFG.discount}</span></div>
+        <div class="info-item"><span class="info-label">時長</span><span class="info-value">${CFG.slotMin} 分鐘 / 部位</span></div>
+        <div class="info-item"><span class="info-label">活動日期</span><span class="info-value">${CFG.dates}，${CFG.time}</span></div>
+        <div class="info-item"><span class="info-label">地點</span><span class="info-value">${CFG.location}</span></div>
+      </div>
+      <div>
+        <div class="info-item"><span class="info-label">網路繳費</span><span class="info-value">${CFG.payOnline}</span></div>
+        <div class="info-item"><span class="info-label">現場繳費</span><span class="info-value">${CFG.payOnsite}</span></div>
+        <div class="info-item"><span class="info-label">放鬆部位</span><span class="info-value">${PARTS.map(p=>'<span class="tag">'+p+'</span>').join('')}</span></div>
+      </div>
+    </div>
+    <hr class="info-divider">
+    <div class="notice-list">
+      <span>1. ${CFG.notice1}</span>
+      <span>2. ${CFG.notice2}</span>
+      <span>3. ${CFG.notice3}</span>
+    </div>`;
+}
+
 loadData();
 addRecipient();
+renderBanner();
 setInterval(silentRefresh,30000);
 </script>
 </body>
