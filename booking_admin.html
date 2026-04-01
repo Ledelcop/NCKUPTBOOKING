@@ -300,14 +300,6 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 </div>
 
 <script>
-const DAYS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
-const PRICE=CFG.price,DISC=CFG.discount;
-const SEGS=['19-20','20-21'];
-const SEG_LABEL={'19-20':'前段 19—20','20-21':'後段 20—21'};
-function buildSlots(){const s=[];let h=19,m=0;for(let i=0;i<10;i++){const st=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;let eh=h,em=m+12;if(em>=60){eh++;em-=60;}s.push(`${st}-${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}`);m+=12;if(m>=60){h++;m-=60;}}return s;}
-const ALL_SLOTS=buildSlots();
-const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
-// ↓↓↓ 後台登入密碼（6碼，可自行修改）↓↓↓
 // ================================================================
 // ⚙️ 設定區 — 所有需要修改的內容都在這裡
 // ================================================================
@@ -330,6 +322,15 @@ const CFG = {
 };
 
 // ================================================================
+
+const DAYS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
+const PRICE=CFG.price,DISC=CFG.discount;
+const SEGS=['19-20','20-21'];
+const SEG_LABEL={'19-20':'前段 19—20','20-21':'後段 20—21'};
+function buildSlots(){const s=[];let h=19,m=0;for(let i=0;i<10;i++){const st=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;let eh=h,em=m+12;if(em>=60){eh++;em-=60;}s.push(`${st}-${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}`);m+=12;if(m>=60){h++;m-=60;}}return s;}
+const ALL_SLOTS=buildSlots();
+const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
+const BEDS=['A','B','C','D','E'];
 
 function checkLogin(){
   const v=document.getElementById('login-input').value.trim();
@@ -407,7 +408,6 @@ function switchTab(tab,el){
 }
 
 // ── 查詢工具 ─────────────────────────────────────────────────
-const BEDS=['A','B','C','D','E'];
 function getTHforDaySeg(dayIdx,seg){
   const dayMap=schedule[dayIdx]||{};
   return Object.entries(dayMap)
