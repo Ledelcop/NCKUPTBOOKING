@@ -573,10 +573,10 @@ function renderAdmTable(){
       <td style="font-size:11px;color:${g.contactMethod==='manual'?'#5A2D82':g.notified?'var(--green-soft)':'var(--stone)'};">${cLabel(g.contactMethod)}${g.notified?' (已通知)':''}</td>
       <td><span class="badge ${g.type==='online'?'badge-online':'badge-walkin'}">${g.type==='online'?'線上':'現場'}</span></td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
-        ${g.payment!=='paid'?`<button class="btn-sm-success" onclick="markGroupPaid(${JSON.stringify(g.ids)})">收款</button>`:''}
+        ${g.payment!=='paid'?`<button class="btn-sm-success" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="markGroupPaid(JSON.parse(this.dataset.ids))">收款</button>`:''}
         ${!g.checkin?`<button class="btn-sm-neutral" onclick="markCk('${g.id}')">打卡</button>`:''}
         ${!g.notified?`<button class="btn-sm-neutral" onclick="markNtf('${g.id}')">已通知</button>`:''}
-        <button class="btn-sm-neutral" onclick="delGroupBk(${JSON.stringify(g.ids)})">取消</button>
+        <button class="btn-sm-neutral" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="delGroupBk(JSON.parse(this.dataset.ids))">取消</button>
       </div></td>
     </tr>`;}).join('');
 }
