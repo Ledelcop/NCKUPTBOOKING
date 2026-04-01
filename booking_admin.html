@@ -643,8 +643,8 @@ function renderWiSlots(){
     const lastIdx=last?slots.indexOf(last):-1;
     const canAdd=!isB&&!isSel&&(wiSlots.length===0||si===lastIdx+1)&&wiSlots.length<needed;
     if(isB) html+='<div class="slot-row"><div class="slot-time-label">'+s+'</div><div class="slot-btn booked">已預約</div></div>';
-    else if(isSel) html+='<div class="slot-row"><div class="slot-time-label">'+s+'</div><div class="slot-btn selected" onclick="deselectWiSlot(''+s+'')">已選 ✕</div></div>';
-    else if(canAdd) html+='<div class="slot-row"><div class="slot-time-label">'+s+'</div><div class="slot-btn available" onclick="selectWiSlot(''+s+'')">可預約</div></div>';
+    else if(isSel) html+='<div class="slot-row"><div class="slot-time-label">'+s+'</div><div class="slot-btn selected" onclick="deselectWiSlot(\''+s+'\')">已選 ✕</div></div>';
+    else if(canAdd) html+='<div class="slot-row"><div class="slot-time-label">'+s+'</div><div class="slot-btn available" onclick="selectWiSlot(\''+s+'\')">可預約</div></div>';
     else html+='<div class="slot-row"><div class="slot-time-label">'+s+'</div><div class="slot-btn" style="border:1.5px solid var(--border);background:var(--cream-dark);color:var(--stone-light);cursor:not-allowed;">'+(wiSlots.length>=needed?'已選滿':'請先選前一格')+'</div></div>';
   });
   html+='</div>';
