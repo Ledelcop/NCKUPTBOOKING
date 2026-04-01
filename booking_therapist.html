@@ -95,10 +95,24 @@ const ALL_SLOTS=buildSlots();
 const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
 
 // ↓↓↓ 把你的 Apps Script 網址貼在這裡（只需填一次）↓↓↓
+// ================================================================
+// ⚙️ 設定區 — 所有需要修改的內容都在這裡
+// ================================================================
+
+// 【必填】Apps Script 網址
 let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrxTlaoBOVqh-EIJovrnqZL0UQ7wd-9ksaqewEGyVI7lWiwRuwCJEHkFFQZGSKPzFU6g/exec';
-// ↓↓↓ 必須與 Apps Script 裡的 SECRET_KEY 完全一致 ↓↓↓
+
+// 【必填】安全密鑰，必須與 Apps Script 裡的 SECRET_KEY 一致
 const SECRET_KEY = 'DCPT116';
-// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+// 【活動資訊】
+const CFG = {
+  activityName: '筋夾！？皮洽鬆？',
+  price: 65,     // 每部位價格（NT$）
+  discount: 5,   // 打卡折扣（NT$）
+};
+
+// ================================================================
 
 function apiPost(d){return fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({...d,secret:SECRET_KEY})}).then(r=>r.json()).catch(()=>null);}
 function showToast(msg,dur=3500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
