@@ -242,10 +242,10 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
             <div class="form-group">
               <label class="required">放鬆部位（可多選）</label>
               <div class="parts-group" id="wi-parts">
-                <div class="part-btn" onclick="this.classList.toggle('selected');updateWiPrice()">上肢</div>
-                <div class="part-btn" onclick="this.classList.toggle('selected');updateWiPrice()">下肢</div>
-                <div class="part-btn" onclick="this.classList.toggle('selected');updateWiPrice()">背部</div>
-                <div class="part-btn" onclick="this.classList.toggle('selected');updateWiPrice()">肩頸</div>
+                <div class="part-btn" onclick="this.classList.toggle('selected');updateWiPrice();if(wiThBed)renderWiSlots();">上肢</div>
+                <div class="part-btn" onclick="this.classList.toggle('selected');updateWiPrice();if(wiThBed)renderWiSlots();">下肢</div>
+                <div class="part-btn" onclick="this.classList.toggle('selected');updateWiPrice();if(wiThBed)renderWiSlots();">背部</div>
+                <div class="part-btn" onclick="this.classList.toggle('selected');updateWiPrice();if(wiThBed)renderWiSlots();">肩頸</div>
               </div>
             </div>
             <div class="form-group">
@@ -679,7 +679,6 @@ function updateWiPrice(){
   let html='部位：'+parts.join('、')+' · NT$'+base;
   if(wiCk) html+=' <span style="color:var(--red-soft);">-NT$'+disc+'</span> = <strong>NT$'+(base-disc)+'</strong>';
   a.innerHTML=html;
-  if(wiThBed)renderWiSlots();
 }
 async function submitWalkin(){
   const bn=document.getElementById('wi-booker').value.trim(),bp=document.getElementById('wi-phone').value.trim(),rn=document.getElementById('wi-recipient').value.trim();
