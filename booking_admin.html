@@ -166,7 +166,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
       <div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;letter-spacing:0.04em;">後台管理</div>
-        <div style="font-size:13px;color:var(--stone);">即時預約總覽、繳費管理、人工傳訊待辦</div>
+        <div style="font-size:13px;color:var(--stone);">即時預約總覽、繳費管理</div>
       </div>
     </div>
     <div class="stats-row" id="admin-stats"></div>
@@ -214,13 +214,6 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
           <tbody id="adm-tbody"></tbody>
         </table>
       </div>
-    </div>
-
-    <!-- 人工傳訊待辦 -->
-    <div class="card">
-      <div class="card-title">人工傳訊待辦</div>
-      <div style="font-size:12px;color:var(--stone);margin-bottom:12px;">選擇 Facebook Messenger 或 LINE 的預約，需由工作人員手動傳送通知</div>
-      <div id="manual-list"></div>
     </div>
 
     <!-- 繳費彙整 -->
@@ -408,7 +401,7 @@ function getBkSlots(bed,seg,dayIdx){return bookings.filter(b=>b.bed===bed&&b.seg
 function getBkForSlot(bed,seg,dayIdx,slot){return bookings.find(b=>b.bed===bed&&b.segment===seg&&b.dayIdx===dayIdx&&b.time===slot);}
 function cLabel(m){return m==='fb'?'FB Messenger':m==='line'?'LINE':'人工傳訊';}
 
-function renderAll(){renderStats();renderThEditor();renderAdmSched();renderAdmTable();renderManualList();renderPayment();}
+function renderAll(){renderStats();renderThEditor();renderAdmSched();renderAdmTable();renderPayment();}
 
 // ── Stats ─────────────────────────────────────────────────────
 function renderStats(){
@@ -417,7 +410,7 @@ function renderStats(){
     <div class="stat-card"><div class="stat-label">總預約筆數</div><div class="stat-value">${bookings.length}</div><div class="stat-sub">部位共 ${bookings.reduce((s,b)=>s+b.parts.length,0)} 個</div></div>
     <div class="stat-card"><div class="stat-label">已繳費</div><div class="stat-value" style="color:var(--green-soft);">${p.length}</div><div class="stat-sub">NT$${p.reduce((s,b)=>s+b.amount,0).toLocaleString()}</div></div>
     <div class="stat-card"><div class="stat-label">未繳費</div><div class="stat-value" style="color:var(--red-soft);">${u.length}</div><div class="stat-sub">NT$${u.reduce((s,b)=>s+b.amount,0).toLocaleString()}</div></div>
-    <div class="stat-card"><div class="stat-label">人工傳訊待辦</div><div class="stat-value" style="color:var(--gold);">${m.length}</div><div class="stat-sub">需人工聯繫</div></div>`;
+  `;
 }
 
 // ── 排班編輯器（每床每段）────────────────────────────────────
@@ -607,89 +600,6 @@ async function delBk(id){
   showToast('預約已取消');
 }
 
-function buildMsgText(b){
-  const DAY_LABELS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
-  const segLabel=b.segment==='19-20'?'前段 19:00—20:00':'後段 20:00—21:00';
-  return `【筋夾！？皮洽鬆？傳情通知】
-有人傳情給你！
-
-被傳情人：${b.recipient}
-部位：${(b.parts||[]).join('、')}
-日期：${DAY_LABELS[b.dayIdx]||''} ${segLabel}
-時間：${b.time||''}
-治療師：${b.therapistName||''}（${b.bed||''}床）
-地點：醫學院 104 多功能實習教室
-
-費用由傳情人支付，準時到場即可 ✨`;
-}
-
-function copyMsg(id){
-  const b=bookings.find(b=>b.id===id);
-  if(!b)return;
-  navigator.clipboard.writeText(buildMsgText(b)).then(()=>showToast('訊息已複製，可直接貼上傳送'));
-}
-
-function renderManualList(){
-  // 篩選 fb（Messenger）和 line 且未通知的
-  const fbList=bookings.filter(b=>(b.contactMethod==='fb'||b.contactMethod==='manual')&&!b.notified);
-  const lineList=bookings.filter(b=>b.contactMethod==='line'&&!b.notified);
-  const c=document.getElementById('manual-list');
-
-  if(!fbList.length&&!lineList.length){
-    c.innerHTML='<div style="color:var(--stone-light);font-size:13px;">目前無待辦人工傳訊 ✓</div>';
-    return;
-  }
-
-  const cardStyle='border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--cream);';
-  const metaStyle='font-size:12px;color:var(--stone);margin-top:4px;';
-  const btnStyle='padding:6px 12px;border-radius:6px;font-size:12px;font-family:\'Noto Sans TC\',sans-serif;cursor:pointer;border:1px solid;transition:all 0.15s;';
-
-  function renderCard(b){
-    const DAY_LABELS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
-    const segLabel=b.segment==='19-20'?'前段':'後段';
-    const isFb=b.contactMethod==='fb'||b.contactMethod==='manual';
-    const fbUrl=b.recipientFb||'';
-    const lineId=b.contactAccount||'';
-
-    return`<div style="${cardStyle}">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:500;color:var(--ink);">${b.recipient}</div>
-          <div style="${metaStyle}">${(b.parts||[]).join('、')} · ${DAY_LABELS[b.dayIdx]||''} ${segLabel} ${b.time||''} · ${b.therapistName||''}（${b.bed||''}床）</div>
-          <div style="${metaStyle}">傳情人：${b.booker}${b.bookerPhone?' · '+b.bookerPhone:''}</div>
-          ${isFb&&fbUrl?`<div style="font-size:11px;color:var(--stone-light);margin-top:2px;word-break:break-all;">FB：${fbUrl}</div>`:''}
-          ${!isFb&&lineId?`<div style="font-size:11px;color:var(--stone-light);margin-top:2px;">LINE ID：<strong>${lineId}</strong></div>`:''}
-          ${!isFb&&!lineId?`<div style="font-size:11px;color:var(--red-soft);margin-top:2px;">未填 LINE ID，請人工查詢</div>`:''}
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-          <button onclick="copyMsg('${b.id}')" style="${btnStyle}background:var(--cream);border-color:var(--border);color:var(--ink-soft);">📋 複製訊息</button>
-          ${isFb?`<a href="${fbUrl||'https://www.facebook.com'}" target="_blank" style="${btnStyle}background:#1877F2;border-color:#1877F2;color:#fff;text-decoration:none;display:block;text-align:center;">${fbUrl?'開啟 Messenger':'搜尋 FB'}</a>`:''}
-          ${!isFb?`<a href="${lineId?'https://line.me/ti/p/~'+lineId:'https://line.me'}" target="_blank" style="${btnStyle}background:#06C755;border-color:#06C755;color:#fff;text-decoration:none;display:block;text-align:center;">${lineId?'開啟 LINE':'LINE 首頁'}</a>`:''}
-          <button onclick="markNtf('${b.id}')" style="${btnStyle}background:var(--green-soft);border-color:var(--green-soft);color:#fff;">✓ 已傳送</button>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  let html='';
-
-  if(fbList.length){
-    html+=`<div style="font-size:11px;font-weight:500;color:#1877F2;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;margin-top:4px;">
-      Facebook Messenger（${fbList.length} 筆待傳）
-    </div>`;
-    html+=fbList.map(renderCard).join('');
-  }
-
-  if(lineList.length){
-    html+=`<div style="font-size:11px;font-weight:500;color:#06C755;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;margin-top:${fbList.length?'16px':'4px'};">
-      LINE（${lineList.length} 筆待傳）
-    </div>`;
-    html+=lineList.map(renderCard).join('');
-  }
-
-  c.innerHTML=html;
-}
-
 function renderPayment(){
   const paid=bookings.filter(b=>b.payment==='paid').reduce((s,b)=>s+b.amount,0);
   const unpaid=bookings.filter(b=>b.payment==='unpaid').reduce((s,b)=>s+b.amount,0);
@@ -860,7 +770,7 @@ async function silentRefresh(){
       }
       prevBookingCount=newBk.length;
       bookings=newBk;
-      renderStats();renderAdmSched();renderAdmTable();renderManualList();renderPayment();
+      renderStats();renderAdmSched();renderAdmTable();renderPayment();
     }
   }catch(e){console.warn('自動更新失敗',e);}
 }
