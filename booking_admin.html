@@ -203,14 +203,13 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
         <div class="filter-bar" id="adm-filter-bar">
           <div class="filter-btn active" onclick="filterAdm('all',this)">全部</div>
           <div class="filter-btn" onclick="filterAdm('unpaid',this)">未繳費</div>
-          <div class="filter-btn" onclick="filterAdm('manual',this)">待人工傳訊</div>
           <div class="filter-btn" onclick="filterAdm('online',this)">線上</div>
           <div class="filter-btn" onclick="filterAdm('walkin',this)">現場</div>
         </div>
       </div>
       <div style="overflow-x:auto;">
         <table class="data-table">
-          <thead><tr><th>#</th><th>傳情人</th><th>被傳情人</th><th>部位</th><th>治療師/床</th><th>日期</th><th>時段</th><th>金額</th><th>打卡</th><th>繳費</th><th>傳訊</th><th>類型</th><th>操作</th></tr></thead>
+          <thead><tr><th>#</th><th>傳情人</th><th>被傳情人</th><th>部位</th><th>治療師/床</th><th>日期</th><th>時段</th><th>金額</th><th>打卡</th><th>繳費</th><th>類型</th><th>操作</th></tr></thead>
           <tbody id="adm-tbody"></tbody>
         </table>
       </div>
@@ -262,15 +261,15 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
             <div class="form-group">
               <label>聯絡方式</label>
               <div class="contact-opts" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;">
-                <div class="contact-opt selected" data-m="fb" onclick="setWiContact('fb',this)" style="border:1.5px solid var(--gold);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--gold-pale);">Facebook<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">Messenger</div></div>
-                <div class="contact-opt" data-m="line" onclick="setWiContact('line',this)" style="border:1.5px solid var(--border);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--cream);">LINE<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">人工傳送</div></div>
-                <div class="contact-opt" data-m="gmail" onclick="setWiContact('gmail',this)" style="border:1.5px solid var(--border);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--cream);">Gmail<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">人工傳送</div></div>
+                <div class="contact-opt selected" data-m="fb" onclick="setWiContact('fb',this)" style="border:1.5px solid var(--gold);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--gold-pale);">Facebook<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">Messenger 通知</div></div>
+                <div class="contact-opt" data-m="line" onclick="setWiContact('line',this)" style="border:1.5px solid var(--border);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--cream);">LINE<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">工作人員通知</div></div>
+                <div class="contact-opt" data-m="gmail" onclick="setWiContact('gmail',this)" style="border:1.5px solid var(--border);border-radius:8px;padding:9px 8px;cursor:pointer;text-align:center;font-size:12px;background:var(--cream);">Gmail<div style="font-size:10px;color:var(--stone-light);margin-top:2px;">自動發送通知信</div></div>
               </div>
               <div id="wi-account-line" style="display:none;margin-top:8px;">
-                <input type="text" id="wi-contact-account-line" placeholder="被傳情人 LINE ID">
+                <input type="text" id="wi-contact-account-line" placeholder="被傳情人 LINE ID（當天現場報名填 o）">
               </div>
               <div id="wi-account-gmail" style="display:none;margin-top:8px;">
-                <input type="email" id="wi-contact-account-gmail" placeholder="被傳情人 Email">
+                <input type="email" id="wi-contact-account-gmail" placeholder="被傳情人 Email（當天現場報名填 o）">
               </div>
             </div>
             <div class="form-group">
@@ -302,17 +301,35 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 
 <script>
 const DAYS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
-const PRICE=65,DISC=5;
+const PRICE=CFG.price,DISC=CFG.discount;
 const SEGS=['19-20','20-21'];
 const SEG_LABEL={'19-20':'前段 19—20','20-21':'後段 20—21'};
 function buildSlots(){const s=[];let h=19,m=0;for(let i=0;i<10;i++){const st=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;let eh=h,em=m+12;if(em>=60){eh++;em-=60;}s.push(`${st}-${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}`);m+=12;if(m>=60){h++;m-=60;}}return s;}
 const ALL_SLOTS=buildSlots();
 const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
 // ↓↓↓ 後台登入密碼（6碼，可自行修改）↓↓↓
+// ================================================================
+// ⚙️ 設定區 — 所有需要修改的內容都在這裡
+// ================================================================
+
+// 【必填】後台登入密碼
 const ADMIN_PASSWORD = 'NCKUPT';
-// ↓↓↓ 必須與 Apps Script 裡的 SECRET_KEY 完全一致 ↓↓↓
+
+// 【必填】安全密鑰，必須與 Apps Script 裡的 SECRET_KEY 一致
 const SECRET_KEY = 'DCPT116';
-// ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+// 【活動資訊】
+const CFG = {
+  activityName:  '筋夾！？皮洽鬆？',
+  price:         65,     // 每部位價格（NT$）
+  discount:      5,      // 打卡折扣（NT$）
+  slotMin:       10,     // 每時段分鐘數
+  dates:         '5/11(一) — 5/15(五)',
+  time:          '19:00—21:00',
+  location:      '醫學院 104 多功能實習教室',
+};
+
+// ================================================================
 
 function checkLogin(){
   const v=document.getElementById('login-input').value.trim();
@@ -332,7 +349,7 @@ if(sessionStorage.getItem('adminAuth')==='1'){
 }
 
 // ↓↓↓ 把你的 Apps Script 網址貼在這裡可以省去每次輸入（選填）↓↓↓
-let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrxTlaoBOVqh-EIJovrnqZL0UQ7wd-9ksaqewEGyVI7lWiwRuwCJEHkFFQZGSKPzFU6g/exec';
+let SCRIPT_URL = '';
 // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 // schedule[dayIdx] = {bed: {segment: {name, gender}}}
@@ -540,11 +557,9 @@ function renderAdmTable(){
         <td>NT$${b.amount}</td>
         <td>—</td>
         <td><span class="badge ${b.payment==='paid'?'badge-paid':'badge-unpaid'}">${b.payment==='paid'?'已繳':'未繳'}</span></td>
-        <td style="font-size:11px;color:${b.contactMethod==='manual'?'#5A2D82':b.notified?'var(--green-soft)':'var(--stone)'};">${cLabel(b.contactMethod)}${b.notified?' (已通知)':''}</td>
         <td><span class="badge" style="background:#F0E6FB;color:#6B2FA0;">續時</span><div style="font-size:10px;color:#6B2FA0;margin-top:2px;">${b.notes}</div></td>
         <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
           ${b.payment!=='paid'?`<button class="btn-sm-success" onclick="markPaid('${b.id}')">收款</button>`:''}
-          ${!b.notified?`<button class="btn-sm-neutral" onclick="markNtf('${b.id}')">已通知</button>`:''}
           <button class="btn-sm-neutral" onclick="delBk('${b.id}')">取消</button>
         </div></td>
       </tr>`;
@@ -563,62 +578,32 @@ function renderAdmTable(){
       <td>NT$${g.amount}</td>
       <td style="font-size:12px;color:${g.checkin?'var(--green-soft)':'var(--stone-light)'};">${g.checkin?`-$${disc}`:'—'}</td>
       <td><span class="badge ${g.payment==='paid'?'badge-paid':'badge-unpaid'}">${g.payment==='paid'?'已繳':'未繳'}</span></td>
-      <td style="font-size:11px;color:${g.contactMethod==='manual'?'#5A2D82':g.notified?'var(--green-soft)':'var(--stone)'};">${cLabel(g.contactMethod)}${g.notified?' (已通知)':''}</td>
       <td><span class="badge ${g.type==='online'?'badge-online':'badge-walkin'}">${g.type==='online'?'線上':'現場'}</span></td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
         ${g.payment!=='paid'?`<button class="btn-sm-success" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="markGroupPaid(JSON.parse(this.dataset.ids))">收款</button>`:''}
         ${!g.checkin?`<button class="btn-sm-neutral" onclick="markCk('${g.id}')">打卡</button>`:''}
-        ${!g.notified?`<button class="btn-sm-neutral" onclick="markNtf('${g.id}')">已通知</button>`:''}
         <button class="btn-sm-neutral" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="delGroupBk(JSON.parse(this.dataset.ids))">取消</button>
       </div></td>
     </tr>`;}).join('');
 }
 async function markGroupPaid(ids){
-  showLo('收款中...');
-  for(const id of ids){
-    const b=bookings.find(b=>b.id===id);
-    if(b)b.payment='paid';
-    const res=await apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});
-    if(!res?.success)Logger.log&&Logger.log('updateBooking failed for '+id);
-  }
-  hideLo();renderAll();showToast('收款完成（'+ids.length+' 筆）');
+  for(const id of ids){const b=bookings.find(b=>b.id===id);if(b)b.payment='paid';apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});}
+  renderAll();showToast('收款完成（'+ids.length+' 筆）');
 }
 async function delGroupBk(ids){
-  showLo('取消中...');
-  for(const id of ids){
-    const res=await apiPost({action:'deleteBooking',id});
-    if(res?.success)bookings=bookings.filter(b=>b.id!==id);
-  }
-  hideLo();renderAll();showToast('預約已取消');
+  bookings=bookings.filter(b=>!ids.includes(b.id));
+  renderAll();showToast('預約已取消');
+  for(const id of ids)apiPost({action:'deleteBooking',id});
 }
-async function markPaid(id){
-  showLo('收款中...');
-  const res=await apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});
-  hideLo();
-  if(res?.success){const b=bookings.find(b=>b.id===id);if(b)b.payment='paid';renderAll();showToast('收款完成');}
-  else{showToast('收款失敗，請重試');loadData();}
-}
-async function markCk(id){
-  const res=await apiPost({action:'updateBooking',id,field:'打卡折扣',value:'Y'});
-  if(res?.success){const b=bookings.find(b=>b.id===id);if(b)b.checkin=true;renderAll();showToast('打卡折扣已套用');}
-  else{showToast('操作失敗，請重試');loadData();}
-}
-async function markNtf(id){
-  const res=await apiPost({action:'updateBooking',id,field:'已通知',value:'Y'});
-  if(res?.success){const b=bookings.find(b=>b.id===id);if(b)b.notified=true;renderAll();showToast('已標記通知完成');}
-  else{showToast('操作失敗，請重試');loadData();}
-}
-async function delBk(id){
-  showLo('取消中...');
-  const res=await apiPost({action:'deleteBooking',id});
-  hideLo();
-  if(res?.success){bookings=bookings.filter(b=>b.id!==id);renderAll();showToast('預約已取消');}
-  else{showToast('取消失敗，請重試');loadData();}
-}
+async function markPaid(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.payment='paid';renderAll();apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});showToast('收款完成');}
+async function markCk(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.checkin=true;renderAll();apiPost({action:'updateBooking',id,field:'打卡折扣',value:'Y'});showToast('打卡折扣已套用');}
+async function markNtf(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.notified=true;renderAll();apiPost({action:'updateBooking',id,field:'已通知',value:'Y'});showToast('已標記通知完成');}
+async function delBk(id){bookings=bookings.filter(b=>b.id!==id);renderAll();apiPost({action:'deleteBooking',id});showToast('預約已取消');}
 
 function renderPayment(){
-  const paid=bookings.filter(b=>b.payment==='paid').reduce((s,b)=>s+b.amount,0);
-  const unpaid=bookings.filter(b=>b.payment==='unpaid').reduce((s,b)=>s+b.amount,0);
+  // 已繳費金額：有打卡的用打卡後金額（65-5=60），沒打卡的用原價
+  const paid=bookings.filter(b=>b.payment==='paid').reduce((s,b)=>s+(b.checkin?b.amount-b.parts.length*DISC:b.amount),0);
+  const unpaid=bookings.filter(b=>b.payment==='unpaid').reduce((s,b)=>s+(b.checkin?b.amount-b.parts.length*DISC:b.amount),0);
   const disc=bookings.filter(b=>b.checkin).reduce((s,b)=>s+b.parts.length*DISC,0);
   document.getElementById('payment-summary').innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
     <div style="background:var(--green-pale);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--green-soft);letter-spacing:0.08em;margin-bottom:6px;text-transform:uppercase;">已收款</div><div style="font-size:22px;font-weight:500;color:var(--green-soft);">NT$${paid.toLocaleString()}</div></div>
