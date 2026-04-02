@@ -209,7 +209,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
         </div>
       </div>
       <div style="margin-bottom:12px;">
-        <input type="text" id="adm-search" placeholder="搜尋傳情人或被傳情人姓名…" oninput="renderAdmTable()" style="width:100%;max-width:320px;border:1px solid var(--border);border-radius:8px;padding:8px 13px;font-size:13px;font-family:'Noto Sans TC',sans-serif;background:var(--cream);outline:none;">
+        <input type="text" id="adm-search" placeholder="🔍 搜尋傳情人或被傳情人姓名…" oninput="renderAdmTable()" style="width:100%;max-width:320px;border:1px solid var(--border);border-radius:8px;padding:8px 13px;font-size:13px;font-family:'Noto Sans TC',sans-serif;background:var(--cream);outline:none;">
       </div>
       <div style="overflow-x:auto;">
         <table class="data-table">
@@ -433,11 +433,31 @@ function renderAll(){renderStats();renderThEditor();renderAdmSched();renderAdmTa
 
 // ── Stats ─────────────────────────────────────────────────────
 function renderStats(){
-  const p=bookings.filter(b=>b.payment==='paid'),u=bookings.filter(b=>b.payment==='unpaid'),m=bookings.filter(b=>b.contactMethod==='manual'&&!b.notified);
+  // 以合併群組計算人數（同傳情人+被傳情人+床+日期+時段區間算一人）
+  const personKeys=new Set();
+  bookings.forEach(b=>{
+    if(b.notes&&b.notes.startsWith('【續時】'))return;
+    personKeys.add(`${b.booker}|${b.recipient}|${b.bed}|${b.segment}|${b.dayIdx}`);
+  });
+  const totalPersons=personKeys.size;
+  const totalParts=bookings.filter(b=>!(b.notes&&b.notes.startsWith('【續時】'))).reduce((s,b)=>s+b.parts.length,0);
+
+  // 已繳/未繳以人為單位
+  const paidKeys=new Set(),unpaidKeys=new Set();
+  bookings.forEach(b=>{
+    if(b.notes&&b.notes.startsWith('【續時】'))return;
+    const k=`${b.booker}|${b.recipient}|${b.bed}|${b.segment}|${b.dayIdx}`;
+    if(b.payment==='paid')paidKeys.add(k);
+    else unpaidKeys.add(k);
+  });
+  // 移除已繳中出現在未繳的（同一組有一筆unpaid就算未繳）
+  unpaidKeys.forEach(k=>paidKeys.delete(k));
+
   document.getElementById('admin-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-label">總預約筆數</div><div class="stat-value">${bookings.length}</div><div class="stat-sub">部位共 ${bookings.reduce((s,b)=>s+b.parts.length,0)} 個</div></div>
-    <div class="stat-card"><div class="stat-label">已繳費</div><div class="stat-value" style="color:var(--green-soft);">${p.length}</div><div class="stat-sub">NT$${p.reduce((s,b)=>s+b.amount,0).toLocaleString()}</div></div>
-    <div class="stat-card"><div class="stat-label">未繳費</div><div class="stat-value" style="color:var(--red-soft);">${u.length}</div><div class="stat-sub">NT$${u.reduce((s,b)=>s+b.amount,0).toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">總預約筆數</div><div class="stat-value">${bookings.length}</div><div class="stat-sub">部位共 ${totalParts} 個</div></div>
+    <div class="stat-card"><div class="stat-label">總預約人數</div><div class="stat-value">${totalPersons}</div><div class="stat-sub">不含續時</div></div>
+    <div class="stat-card"><div class="stat-label">已繳費</div><div class="stat-value" style="color:var(--green-soft);">${paidKeys.size} 人</div></div>
+    <div class="stat-card"><div class="stat-label">未繳費</div><div class="stat-value" style="color:var(--red-soft);">${unpaidKeys.size} 人</div></div>
   `;
 }
 
@@ -584,7 +604,7 @@ function renderAdmTable(){
     const disc=g.checkin?g.parts.length*DISC:0;
     const slotsStr=g.slots.length>1?`${g.slots[0]} ~ ${g.slots[g.slots.length-1].split('-')[1]}`:(g.slots[0]||'');
     return`<tr>
-      <td style="font-size:12px;font-weight:500;">${g.ids[0]}${g.ids.length>1?`<div style="font-size:9px;color:var(--stone-light);">+${g.ids.length-1}筆</div>`:''}</td>
+      <td style="font-size:12px;font-weight:500;">${g.ids[0]}</td>
       <td>${g.booker}${g.bookerDept?`<div style="font-size:10px;color:var(--stone-light);">${g.bookerDept}</div>`:''}</td><td>${g.recipient}</td>
       <td>${g.parts.map(p=>`<span class="badge-part">${p}</span>`).join('')}</td>
       <td>${g.bed?`${g.bed}床 ${g.therapistName} ${gLabel}`.trim():'—'}<br><span style="font-size:10px;color:var(--stone);">${SEG_LABEL[g.segment]||g.segment||''}</span></td>
