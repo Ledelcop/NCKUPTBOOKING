@@ -378,8 +378,8 @@ function renderRecipientCard(r,i){
     <div class="rc-section">
       <div class="rc-section-label">通知被傳情人的聯絡方式</div>
       <div class="contact-opts">
-        <div class="contact-opt ${r.contactMethod==='fb'?'selected':''}" onclick="setContact(${i},'fb')">Facebook<div class="contact-opt-sub">Messenger（工作人員代為通知）</div></div>
-        <div class="contact-opt ${r.contactMethod==='line'?'selected':''}" onclick="setContact(${i},'line')">LINE<div class="contact-opt-sub">工作人員以 LINE 通知</div></div>
+        <div class="contact-opt ${r.contactMethod==='fb'?'selected':''}" onclick="setContact(${i},'fb')">Facebook</div>
+        <div class="contact-opt ${r.contactMethod==='line'?'selected':''}" onclick="setContact(${i},'line')">LINE</div>
         <div class="contact-opt ${r.contactMethod==='gmail'?'selected':''}" onclick="setContact(${i},'gmail')">Gmail<div class="contact-opt-sub">系統自動發送通知信</div></div>
       </div>
       ${r.contactMethod==='line'?`<div style="margin-top:8px;"><label style="font-size:12px;color:var(--stone);font-weight:500;">LINE ID</label><input type="text" value="${r.contactAccount||''}" oninput="updContactAcc(${i},this.value)" placeholder="被傳情人的 LINE ID" style="margin-top:5px;"></div>`:''}
