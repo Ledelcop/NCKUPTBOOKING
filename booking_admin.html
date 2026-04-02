@@ -456,8 +456,8 @@ function renderStats(){
   document.getElementById('admin-stats').innerHTML=`
     <div class="stat-card"><div class="stat-label">總預約筆數</div><div class="stat-value">${bookings.length}</div><div class="stat-sub">部位共 ${totalParts} 個</div></div>
     <div class="stat-card"><div class="stat-label">總預約人數</div><div class="stat-value">${totalPersons}</div><div class="stat-sub">不含續時</div></div>
-    <div class="stat-card"><div class="stat-label">已繳費</div><div class="stat-value" style="color:var(--green-soft);">${paidKeys.size} 人</div></div>
-    <div class="stat-card"><div class="stat-label">未繳費</div><div class="stat-value" style="color:var(--red-soft);">${unpaidKeys.size} 人</div></div>
+    <div class="stat-card"><div class="stat-label">已繳費</div><div class="stat-value" style="color:var(--green-soft);">${paidKeys.size}</div></div>
+    <div class="stat-card"><div class="stat-label">未繳費</div><div class="stat-value" style="color:var(--red-soft);">${unpaidKeys.size}</div></div>
   `;
 }
 
