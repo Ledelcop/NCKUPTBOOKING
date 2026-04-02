@@ -198,7 +198,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 
     <!-- 預約名單 -->
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:10px;">
         <div class="card-title" style="margin:0;">預約名單</div>
         <div class="filter-bar" id="adm-filter-bar">
           <div class="filter-btn active" onclick="filterAdm('all',this)">全部</div>
@@ -207,6 +207,9 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
           <div class="filter-btn" onclick="filterAdm('walkin',this)">現場</div>
           <div class="filter-btn" onclick="filterAdm('ext',this)">續時</div>
         </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <input type="text" id="adm-search" placeholder="🔍 搜尋傳情人或被傳情人姓名…" oninput="renderAdmTable()" style="width:100%;max-width:320px;border:1px solid var(--border);border-radius:8px;padding:8px 13px;font-size:13px;font-family:'Noto Sans TC',sans-serif;background:var(--cream);outline:none;">
       </div>
       <div style="overflow-x:auto;">
         <table class="data-table">
@@ -230,6 +233,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
           <div class="card-title">快速登記</div>
           <div style="display:flex;flex-direction:column;gap:11px;">
             <div class="form-group"><label class="required">傳情人姓名</label><input type="text" id="wi-booker" placeholder="姓名"></div>
+            <div class="form-group"><label class="required">系級</label><input type="text" id="wi-dept" placeholder="例：物治115"></div>
             <div class="form-group"><label class="required">聯絡電話</label><input type="tel" id="wi-phone" placeholder="09XX-XXX-XXX"></div>
             <div class="form-group"><label class="required">被傳情人姓名</label><input type="text" id="wi-recipient" placeholder="被傳情人姓名"></div>
             <div class="form-group">
@@ -389,7 +393,7 @@ async function loadData(){
 function apiFetch(a){return fetch(`${SCRIPT_URL}?action=${a}`).then(r=>r.json());}
 function apiPost(d){return fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({...d,secret:SECRET_KEY})}).then(r=>r.json()).catch(()=>null);}
 function parseBk(arr){return arr.map(b=>({
-  id:b['編號'],booker:b['傳情人'],bookerPhone:b['電話']||'',
+  id:b['編號'],booker:b['傳情人'],bookerDept:b['系級']||'',bookerPhone:b['電話']||'',
   bookerFb:b['傳情人FB']||'',recipient:b['被傳情人'],
   recipientFb:b['被傳情人FB']||'',
   parts:typeof b['部位']==='string'?b['部位'].split(',').filter(Boolean):(b['部位']||[]),
@@ -524,6 +528,9 @@ function renderAdmTable(){
   else if(admFilter==='online')data=data.filter(b=>b.type==='online');
   else if(admFilter==='walkin')data=data.filter(b=>b.type==='walkin');
   else if(admFilter==='ext')data=data.filter(b=>b.notes&&b.notes.startsWith('【續時】'));
+  // 搜尋過濾
+  const q=(document.getElementById('adm-search')?.value||'').trim().toLowerCase();
+  if(q)data=data.filter(b=>(b.booker||'').toLowerCase().includes(q)||(b.recipient||'').toLowerCase().includes(q));
 
   // 合併同傳情人+被傳情人+床位+日期+時段區間的多筆（多部位合一行）
   const groups=[];
@@ -578,7 +585,7 @@ function renderAdmTable(){
     const slotsStr=g.slots.length>1?`${g.slots[0]} ~ ${g.slots[g.slots.length-1].split('-')[1]}`:(g.slots[0]||'');
     return`<tr>
       <td style="font-size:12px;font-weight:500;">${g.ids[0]}${g.ids.length>1?`<div style="font-size:9px;color:var(--stone-light);">+${g.ids.length-1}筆</div>`:''}</td>
-      <td>${g.booker}</td><td>${g.recipient}</td>
+      <td>${g.booker}${g.bookerDept?`<div style="font-size:10px;color:var(--stone-light);">${g.bookerDept}</div>`:''}</td><td>${g.recipient}</td>
       <td>${g.parts.map(p=>`<span class="badge-part">${p}</span>`).join('')}</td>
       <td>${g.bed?`${g.bed}床 ${g.therapistName} ${gLabel}`.trim():'—'}<br><span style="font-size:10px;color:var(--stone);">${SEG_LABEL[g.segment]||g.segment||''}</span></td>
       <td style="font-size:12px;">${DAYS[g.dayIdx]||''}</td>
@@ -595,12 +602,16 @@ function renderAdmTable(){
     </tr>`;}).join('');
 }
 async function markGroupPaid(ids){
-  for(const id of ids){const b=bookings.find(b=>b.id===id);if(b)b.payment='paid';apiPost({action:'updateBooking',id,field:'繳費狀態',value:'paid'});}
-  renderAll();showToast('收款完成（'+ids.length+' 筆）');
+  for(const id of ids){const b=bookings.find(b=>b.id===id);if(b)b.payment='paid';}
+  renderAll();
+  apiPost({action:'updateMultipleBookings',ids,field:'繳費狀態',value:'paid'});
+  showToast('收款完成（'+ids.length+' 筆）');
 }
 async function markGroupCk(ids){
-  for(const id of ids){const b=bookings.find(b=>b.id===id);if(b)b.checkin=true;apiPost({action:'updateBooking',id,field:'打卡折扣',value:'Y'});}
-  renderAll();showToast('打卡折扣已套用（'+ids.length+' 筆）');
+  for(const id of ids){const b=bookings.find(b=>b.id===id);if(b)b.checkin=true;}
+  renderAll();
+  apiPost({action:'updateMultipleBookings',ids,field:'打卡折扣',value:'Y'});
+  showToast('打卡折扣已套用（'+ids.length+' 筆）');
 }
 async function delGroupBk(ids){
   bookings=bookings.filter(b=>!ids.includes(b.id));
@@ -714,6 +725,7 @@ function updateWiPrice(){
 }
 async function submitWalkin(){
   const bn=document.getElementById('wi-booker').value.trim(),bp=document.getElementById('wi-phone').value.trim(),rn=document.getElementById('wi-recipient').value.trim();
+  const bdept=document.getElementById('wi-dept').value.trim();
   const parts=[...document.querySelectorAll('#wi-parts .part-btn.selected')].map(e=>e.textContent);
   const cm=wiContactMethod||'fb';
   const ca=cm==='line'?(document.getElementById('wi-contact-account-line').value.trim()):cm==='gmail'?(document.getElementById('wi-contact-account-gmail').value.trim()):(document.getElementById('wi-contact-account-fb').value.trim());
@@ -725,7 +737,7 @@ async function submitWalkin(){
   showLo('登記中...');
   for(let si=0;si<wiSlots.length;si++){
     const s=wiSlots[si];
-    const bk={booker:bn,bookerPhone:bp,bookerFb:'',recipient:rn,recipientFb:'',
+    const bk={booker:bn,bookerDept:bdept,bookerPhone:bp,bookerFb:'',recipient:rn,recipientFb:'',
       parts:[parts[si]||parts[0]],therapistName:todayTh?.name||'',therapistGender:todayTh?.gender||'',
       bed:wiThBed,segment:wiSeg,dayIdx:wiDay,time:s,
       amount:PRICE,checkin:wiCk,payment:'unpaid',type:'walkin',
@@ -735,7 +747,7 @@ async function submitWalkin(){
     bookings.push({...bk,id:res?.id||('L'+Date.now()+si)});
   }
   hideLo();
-  ['wi-booker','wi-phone','wi-recipient'].forEach(id=>document.getElementById(id).value='');
+  ['wi-booker','wi-phone','wi-recipient','wi-dept'].forEach(id=>document.getElementById(id).value='');
   document.querySelectorAll('#wi-parts .part-btn.selected').forEach(e=>e.classList.remove('selected'));
   wiSlots=[];wiThBed=null;document.getElementById('wi-therapist').value='';
   document.getElementById('wi-slots').innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先選擇治療師</div>';
