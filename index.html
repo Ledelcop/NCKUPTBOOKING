@@ -125,6 +125,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
     <div class="card-title">步驟一 · 傳情人資料</div>
     <div class="form-grid">
       <div class="form-group"><label class="required">傳情人姓名</label><input type="text" id="booker-name" placeholder="您的姓名"></div>
+      <div class="form-group"><label class="required">系級</label><input type="text" id="booker-dept" placeholder="例：物治115"></div>
       <div class="form-group"><label class="required">聯絡電話</label><input type="tel" id="booker-phone" placeholder="09XX-XXX-XXX"></div>
       <div class="form-group"><label class="required">傳情人臉書連結</label><input type="url" id="booker-fb" placeholder="https://www.facebook.com/yourname"></div>
       <div class="form-group"><label class="required">Email（預約確認信）</label><input type="email" id="booker-email" placeholder="yourname@gmail.com"></div>
@@ -459,10 +460,11 @@ function renderPrice(){
 // ── 送出 ──────────────────────────────────────────────────────
 async function submitBooking(){
   const bn=document.getElementById('booker-name').value.trim();
+  const bdept=document.getElementById('booker-dept').value.trim();
   const bp=document.getElementById('booker-phone').value.trim();
   const bfb=document.getElementById('booker-fb').value.trim();
   const be=document.getElementById('booker-email').value.trim();
-  if(!bn||!bp||!bfb||!be){showToast('請填寫傳情人姓名、電話、臉書連結與 Email');return;}
+  if(!bn||!bdept||!bp||!bfb||!be){showToast('請填寫傳情人姓名、系級、電話、臉書連結與 Email');return;}
   if(!recipients.length){showToast('請至少新增一位被傳情人');return;}
   for(const r of recipients){
     if(!r.name){showToast('請填寫所有被傳情人姓名');return;}
@@ -501,9 +503,12 @@ async function submitBooking(){
     for(let si=0;si<r.selSlots.length;si++){
       const s=r.selSlots[si];
       const amt=PRICE; // 每個時段一個部位 NT$65
-      const bk={booker:bn,bookerPhone:bp,bookerFb:bfb,bookerEmail:be,
+      const bk={booker:bn,bookerDept:bdept,bookerPhone:bp,bookerFb:bfb,bookerEmail:be,
         recipient:r.name,recipientFb:r.fb,
         parts:[r.parts[si]||r.parts[0]], // 每個時段對應一個部位
+        allParts:r.parts, // 完整部位清單（供發信用）
+        totalSlots:r.selSlots.length, // 總時段數
+        startTime:r.selSlots[0], // 開始時間
         therapistName:r.selTh.name,therapistGender:r.selTh.gender||'',
         bed:r.selTh.bed,segment:r.selSeg,dayIdx:r.selDay,time:s,
         amount:amt,checkin:false,payment:'unpaid',type:'online',
