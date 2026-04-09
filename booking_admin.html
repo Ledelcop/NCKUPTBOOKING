@@ -200,12 +200,15 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:10px;">
         <div class="card-title" style="margin:0;">預約名單</div>
-        <div class="filter-bar" id="adm-filter-bar">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button onclick="copyPayReminder()" style="background:var(--gold-pale);border:1px solid var(--gold);color:var(--ink-soft);padding:6px 12px;border-radius:7px;font-size:12px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;">📋 複製繳費提醒</button>
+          <div class="filter-bar" id="adm-filter-bar">
           <div class="filter-btn active" onclick="filterAdm('all',this)">全部</div>
           <div class="filter-btn" onclick="filterAdm('unpaid',this)">未繳費</div>
           <div class="filter-btn" onclick="filterAdm('online',this)">線上</div>
           <div class="filter-btn" onclick="filterAdm('walkin',this)">現場</div>
           <div class="filter-btn" onclick="filterAdm('ext',this)">續時</div>
+        </div>
         </div>
       </div>
       <div style="margin-bottom:12px;">
@@ -617,6 +620,8 @@ function renderAdmTable(){
       <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
         ${g.payment!=='paid'?`<button class="btn-sm-success" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="markGroupPaid(JSON.parse(this.dataset.ids))">收款</button>`:''}
         ${!g.checkin?`<button class="btn-sm-neutral" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="markGroupCk(JSON.parse(this.dataset.ids))">打卡</button>`:''}
+        ${g.contactMethod==='fb'||g.contactMethod==='line'?`<button class="btn-sm-neutral" onclick="copyMsg('${g.id}')">複製</button>`:''}
+        ${g.contactMethod==='fb'||g.contactMethod==='line'?`<button class="btn-sm-neutral" onclick="openContact(bookings.find(b=>b.id==='${g.id}'))">${g.contactMethod==='fb'?'FB':'LINE'}</button>`:''}
         <button class="btn-sm-neutral" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="delGroupBk(JSON.parse(this.dataset.ids))">取消</button>
       </div></td>
     </tr>`;}).join('');
@@ -642,6 +647,52 @@ async function markPaid(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.p
 async function markCk(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.checkin=true;renderAll();apiPost({action:'updateBooking',id,field:'打卡折扣',value:'Y'});showToast('打卡折扣已套用');}
 async function markNtf(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.notified=true;renderAll();apiPost({action:'updateBooking',id,field:'已通知',value:'Y'});showToast('已標記通知完成');}
 async function delBk(id){bookings=bookings.filter(b=>b.id!==id);renderAll();apiPost({action:'deleteBooking',id});showToast('預約已取消');}
+
+function buildMsgText(b){
+  const DAY_LABELS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
+  const segLabel=b.segment==='19-20'?'前段 19:00—20:00':'後段 20:00—21:00';
+  return `【筋夾！？皮洽鬆？傳情通知】
+有人傳情給你！
+
+被傳情人：${b.recipient}
+部位：${(b.parts||[]).join('、')}
+日期：${DAY_LABELS[b.dayIdx]||''} ${segLabel}
+時間：${b.time||''}
+治療師：${b.therapistName||''}（${b.bed||''}床）
+地點：醫學院 104 多功能實習教室
+
+費用由傳情人支付，準時到場即可 ✨
+
+⚠️ 注意事項：
+1️⃣ 請提早三分鐘到場，手部消毒、量測體溫後遵循工作人員指示進場。
+2️⃣ 建議穿著寬鬆短袖、短褲；若有運動後請清潔身體再前來。
+3️⃣ 時段前如有發燒、咳嗽、失去嗅味覺等症狀請告知工作人員。
+4️⃣ 全程配戴口罩，如有不適請立即反應。
+5️⃣ 放鬆後可能有血液循環加快、體溫上升等反應，建議補充水分再離開。
+
+謝謝您的耐心閱讀，期待當天與您相遇🥰`;
+}
+
+const PAY_REMINDER = `同學您好，我是這屆成大物治傳情的負責人！
+不好意思這麼晚打擾，我們看到您有填寫今年傳情的網路表單。提醒您明天為最後一天網路報名繳費的時間，請於以下時間前往醫學院內攤位繳費，逾時將釋出名額給現場報名的人，謝謝您的配合。
+日期｜5/8（五）
+時間｜12:00～13:00
+　　　17:00～18:00`;
+
+function copyPayReminder(){
+  navigator.clipboard.writeText(PAY_REMINDER).then(()=>showToast('繳費提醒已複製！'));
+}
+
+function copyMsg(id){
+  const b=bookings.find(b=>b.id===id);
+  if(!b)return;
+  navigator.clipboard.writeText(buildMsgText(b)).then(()=>showToast('訊息已複製！'));
+}
+function openContact(b){
+  const isFb=b.contactMethod==='fb';
+  const url=isFb?(b.recipientFb||'https://www.facebook.com'):(b.contactAccount?'https://line.me/ti/p/~'+b.contactAccount:'https://line.me');
+  window.open(url,'_blank');
+}
 
 function renderPayment(){
   // 以合併群組為單位計算金額（同傳情人+被傳情人+床+日期+時段）
