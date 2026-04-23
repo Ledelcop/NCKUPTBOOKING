@@ -337,18 +337,24 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
         <div>
           <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">日期</label>
           <div id="cf-day-tabs" style="display:flex;gap:6px;flex-wrap:wrap;">
-            <div class="filter-btn active" onclick="setCfDay(0,this)">5/11</div>
-            <div class="filter-btn" onclick="setCfDay(1,this)">5/12</div>
-            <div class="filter-btn" onclick="setCfDay(2,this)">5/13</div>
-            <div class="filter-btn" onclick="setCfDay(3,this)">5/14</div>
-            <div class="filter-btn" onclick="setCfDay(4,this)">5/15</div>
+            <div class="filter-btn active" onclick="setCfDay(0,this)">5/4</div>
+            <div class="filter-btn" onclick="setCfDay(1,this)">5/5</div>
+            <div class="filter-btn" onclick="setCfDay(2,this)">5/6</div>
+            <div class="filter-btn" onclick="setCfDay(3,this)">5/7</div>
+            <div class="filter-btn" onclick="setCfDay(4,this)">5/8</div>
+            <div class="filter-btn" onclick="setCfDay(5,this)">5/11</div>
+            <div class="filter-btn" onclick="setCfDay(6,this)">5/12</div>
+            <div class="filter-btn" onclick="setCfDay(7,this)">5/13</div>
+            <div class="filter-btn" onclick="setCfDay(8,this)">5/14</div>
+            <div class="filter-btn" onclick="setCfDay(9,this)">5/15</div>
           </div>
         </div>
         <div>
           <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">時段</label>
-          <div id="cf-seg-tabs" style="display:flex;gap:6px;">
+          <div id="cf-seg-tabs" style="display:flex;gap:6px;flex-wrap:wrap;">
             <div class="filter-btn active" onclick="setCfSeg('前段',this)">前段 19—20</div>
             <div class="filter-btn" onclick="setCfSeg('後段',this)">後段 20—21</div>
+            <div class="filter-btn" onclick="setCfSeg('全段',this)">全段 19—21</div>
           </div>
         </div>
       </div>
@@ -983,7 +989,7 @@ async function silentRefresh(){
 // 收支結算
 // ================================================================
 let cfDay=0, cfSeg='前段', cfPrevBag=0;
-const CF_DAYS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
+const CF_DAYS=['5/4(六)','5/5(日)','5/6(一)','5/7(二)','5/8(三)','5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
 
 function setCfDay(idx,el){
   cfDay=idx;
