@@ -47,7 +47,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 .segment-btn.active{border-color:var(--gold);background:var(--gold-pale);box-shadow:0 0 0 1px var(--gold);}
 .segment-btn-time{font-size:14px;font-weight:500;color:var(--ink);}
 .segment-btn-label{font-size:11px;color:var(--stone);margin-top:2px;}
-/* 治療師 */
+/* 服務員 */
 .therapist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:8px;}
 .th-card{border:1px solid var(--border);border-radius:10px;padding:11px;cursor:pointer;transition:all 0.2s;background:var(--cream);text-align:center;}
 .th-card.selected{border-color:var(--gold);background:var(--gold-pale);box-shadow:0 0 0 1px var(--gold);}
@@ -132,10 +132,10 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
     </div>
   </div>
 
-  <!-- 步驟二：被傳情人（每人各自選治療師+時段） -->
+  <!-- 步驟二：被傳情人（每人各自選服務人員+時段） -->
   <div class="card">
     <div class="card-title">步驟二 · 被傳情人資料與時段選擇</div>
-    <div style="font-size:12px;color:var(--stone);margin-bottom:16px;">每位被傳情人可分別選擇治療師和時段，選幾個部位就占幾個時段</div>
+    <div style="font-size:12px;color:var(--stone);margin-bottom:16px;">每位被傳情人可分別選擇服務人員和時段，選幾個部位就占幾個時段</div>
     <div id="recipients-list"></div>
     <button class="add-recipient-btn" id="add-btn" onclick="addRecipient()">＋ 新增被傳情人</button>
   </div>
@@ -218,7 +218,7 @@ const CFG = {
   payOnsite:     '5/4(一) — 5/8(五)，12—13時 / 17—18時', // 現場繳費
   payLocation:   '醫學院 104 多功能實習教室前',  // 繳費地點
   notice1:       '表單需填寫傳情人與被傳情人臉書連結，可先複製好。此份表單最多可傳給三位被傳情人。',
-  notice2:       '選幾個部位就占幾個時段，每個時段 10 分鐘。每位被傳情人可各自選擇不同治療師和時段。',
+  notice2:       '選幾個部位就占幾個時段，每個時段 10 分鐘。每位被傳情人可各自選擇不同服務人員和時段。',
   notice3:       '背部不含頸部後面。傳情相關事項聯絡會透過臉書。',
 };
 
@@ -254,7 +254,7 @@ async function loadData(){
 function parseBk(arr){
   return arr.map(b=>({
     id:b['編號'],recipient:b['被傳情人'],parts:typeof b['部位']==='string'?b['部位'].split(',').filter(Boolean):(b['部位']||[]),
-    therapistName:b['治療師名稱']||'',therapistGender:b['性別']||'',
+    therapistName:b['服務人員名稱']||'',therapistGender:b['性別']||'',
     bed:b['床位']||'',segment:b['時段區間']||'',
     dayIdx:parseInt(b['日期索引'])||0,time:b['時段'],
     payment:b['繳費狀態']||'unpaid'
@@ -275,7 +275,7 @@ function togglePart(i,p){
   const idx=r.parts.indexOf(p);
   if(idx>-1)r.parts.splice(idx,1);
   else r.parts.push(p);
-  // 部位數改變時，重置時段選擇（但保留治療師）
+  // 部位數改變時，重置時段選擇（但保留服務人員）
   r.selSlots=[];
   renderAll();
 }
@@ -321,7 +321,7 @@ function getOtherSelSlots(myIdx,bed,seg,dayIdx){
 }
 
 function gClass(g){return g==='男'?'male':g==='女'?'female':'other';}
-function gLabel(g){return g==='男'?'男治療師':g==='女'?'女治療師':g||''}
+function gLabel(g){const n=g?g.replace('治療師','服務人員'):'';return n==='男'?'男服務人員':n==='女'?'女服務人員':n||''}
 
 // ── 渲染 ──────────────────────────────────────────────────────
 function renderAll(){
@@ -359,7 +359,7 @@ function renderRecipientCard(r,i){
   if(needed===0){
     summaryHtml=`<div class="sel-summary sel-summary-warn">請先選擇放鬆部位，系統將自動計算所需時段數</div>`;
   }else if(!r.selTh){
-    summaryHtml=`<div class="sel-summary sel-summary-warn">需選 ${needed} 個時段（${needed} 個部位），請選擇治療師</div>`;
+    summaryHtml=`<div class="sel-summary sel-summary-warn">需選 ${needed} 個時段（${needed} 個部位），請選擇服務人員</div>`;
   }else if(r.selSlots.length<needed){
     summaryHtml=`<div class="sel-summary sel-summary-warn">${r.selTh.name}（${r.selTh.bed}床）· 還需選 ${needed-r.selSlots.length} 個時段</div>`;
   }else{
@@ -413,7 +413,7 @@ function renderRecipientCard(r,i){
           <div class="segment-btn-time">20:00 — 21:00</div><div class="segment-btn-label">後段</div>
         </div>
       </div>
-      <div class="rc-section-label">選擇治療師</div>
+      <div class="rc-section-label">選擇服務人員</div>
       ${thsForDaySeg.length?
         `<div class="therapist-grid">${thsForDaySeg.map(t=>{
           const gc=gClass(t.gender);
@@ -481,7 +481,7 @@ async function submitBooking(){
   for(const r of recipients){
     if(!r.name){showToast('請填寫所有被傳情人姓名');return;}
     if(!r.parts.length){showToast(`${r.name||'被傳情人'}請選擇至少一個部位`);return;}
-    if(!r.selTh){showToast(`${r.name||'被傳情人'}請選擇治療師`);return;}
+    if(!r.selTh){showToast(`${r.name||'被傳情人'}請選擇服務人員`);return;}
     if(r.selSlots.length<r.parts.length){showToast(`${r.name||'被傳情人'}還需選 ${r.parts.length-r.selSlots.length} 個時段`);return;}
   }
 
@@ -552,7 +552,7 @@ async function submitBooking(){
         <div style="font-weight:500;margin-bottom:6px;">被傳情人：${r.name}</div>
         <div style="color:var(--stone);">部位：${r.parts.join('、')}</div>
         <div style="color:var(--stone);">${DAYS[r.selDay]} · ${segLabel(r.selSeg)}</div>
-        <div style="color:var(--stone);">治療師：${r.selTh.name}（${r.selTh.bed}床）${r.selTh.gender?` · ${r.selTh.gender}治療師`:''}</div>
+        <div style="color:var(--stone);">服務人員：${r.selTh.name}（${r.selTh.bed}床）${r.selTh.gender?` · ${r.selTh.gender}服務人員`:''}</div>
         <div style="color:var(--stone);">時間：${r.selSlots[0]} — ${r.selSlots[r.selSlots.length-1].split('-')[1]}（${r.parts.length} 個時段，${r.parts.length*10} 分鐘）</div>
         <div style="color:var(--stone);">費用：NT$${r.parts.length*PRICE}</div>
         <div style="font-size:11px;color:var(--stone-light);margin-top:4px;">聯絡：${r.contactMethod==='fb'?'Facebook Messenger':r.contactMethod==='line'?`LINE（${r.contactAccount||''}）`:`Gmail（${r.contactAccount||''}）`}</div>
