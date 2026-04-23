@@ -352,9 +352,10 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
         <div>
           <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">時段</label>
           <div id="cf-seg-tabs" style="display:flex;gap:6px;flex-wrap:wrap;">
-            <div class="filter-btn active" onclick="setCfSeg('前段',this)">前段 19—20</div>
-            <div class="filter-btn" onclick="setCfSeg('後段',this)">後段 20—21</div>
-            <div class="filter-btn" onclick="setCfSeg('全段',this)">全段 19—21</div>
+            <div class="filter-btn active" onclick="setCfSeg('1200-1300',this)">12:00—13:00</div>
+            <div class="filter-btn" onclick="setCfSeg('1700-1800',this)">17:00—18:00</div>
+            <div class="filter-btn" onclick="setCfSeg('1900-2000',this)">19:00—20:00</div>
+            <div class="filter-btn" onclick="setCfSeg('2000-2100',this)">20:00—21:00</div>
           </div>
         </div>
       </div>
@@ -988,7 +989,7 @@ async function silentRefresh(){
 // ================================================================
 // 收支結算
 // ================================================================
-let cfDay=0, cfSeg='前段', cfPrevBag=0;
+let cfDay=0, cfSeg='1200-1300', cfPrevBag=0;
 const CF_DAYS=['5/4(六)','5/5(日)','5/6(一)','5/7(二)','5/8(三)','5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
 
 function setCfDay(idx,el){
