@@ -128,6 +128,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
   <div class="nav-right">
     <button class="tab-btn active" onclick="switchTab('admin',this)">後台總覽</button>
     <button class="tab-btn" onclick="switchTab('walkin',this)">現場報名</button>
+    <button class="tab-btn" onclick="switchTab('cashflow',this)">收支</button>
     <span class="live-indicator"><span class="live-dot"></span>即時</span>
     <span style="font-size:11px;color:rgba(255,255,255,0.35);">(<span id="refresh-countdown">30</span>s)</span>
     <button onclick="loadData()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(184,149,90,0.4);color:var(--gold-light);padding:6px 12px;border-radius:7px;font-size:12px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;">重新整理</button>
@@ -311,6 +312,85 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
       </div>
     </div>
   </div>
+
+  <!-- 收支 -->
+  <div class="tab-content" id="tab-cashflow">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;letter-spacing:0.04em;margin-bottom:3px;">收支結算</div>
+    <div style="font-size:12px;color:var(--stone);margin-bottom:20px;">每段結束後填寫，系統自動寫入試算表</div>
+
+    <!-- 初始金額設定 -->
+    <div class="card" id="cf-init-card">
+      <div class="card-title">初始備用金</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:160px;">
+          <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">活動開始前的備用金（NT$）</label>
+          <input type="number" id="cf-init" placeholder="200" min="0" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;background:var(--cream);font-family:'Noto Sans TC',sans-serif;outline:none;">
+        </div>
+        <button onclick="saveCfInit()" style="padding:9px 20px;background:var(--ink);color:var(--gold-light);border:1px solid var(--gold);border-radius:8px;font-size:13px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;margin-top:16px;">儲存</button>
+      </div>
+    </div>
+
+    <!-- 結算表單 -->
+    <div class="card">
+      <div class="card-title">新增結算</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">日期</label>
+          <div id="cf-day-tabs" style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${['5/11','5/12','5/13','5/14','5/15'].map((d,i)=>`<div class="filter-btn${i===0?' active':''}" onclick="setCfDay(${i},this)">${d}</div>`).join('')}
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">時段</label>
+          <div id="cf-seg-tabs" style="display:flex;gap:6px;">
+            <div class="filter-btn active" onclick="setCfSeg('前段',this)">前段 19—20</div>
+            <div class="filter-btn" onclick="setCfSeg('後段',this)">後段 20—21</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">錢袋總和（NT$）<span style="color:var(--stone-light);">（累計）</span></label>
+          <input type="number" id="cf-bag" placeholder="0" min="0" oninput="calcCf()" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;background:var(--cream);font-family:'Noto Sans TC',sans-serif;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">打卡張數（NT$60/張）</label>
+          <input type="number" id="cf-ck" placeholder="0" min="0" oninput="calcCf()" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;background:var(--cream);font-family:'Noto Sans TC',sans-serif;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">無打卡張數（NT$65/張）</label>
+          <input type="number" id="cf-nock" placeholder="0" min="0" oninput="calcCf()" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;background:var(--cream);font-family:'Noto Sans TC',sans-serif;outline:none;">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">退費金額（NT$）</label>
+          <input type="number" id="cf-refund" placeholder="0" min="0" oninput="calcCf()" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;background:var(--cream);font-family:'Noto Sans TC',sans-serif;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">備注</label>
+          <input type="text" id="cf-note" placeholder="（選填）" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;background:var(--cream);font-family:'Noto Sans TC',sans-serif;outline:none;">
+        </div>
+      </div>
+      <!-- 即時計算 -->
+      <div id="cf-calc" style="background:var(--cream-dark);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;display:none;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--stone);">預期收入（60×打卡 + 65×無打卡）</span><span id="cf-expected">NT$0</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--stone);">本段淨收益（錢袋總和 − 上段錢袋）</span><span id="cf-net">NT$0</span></div>
+        <div style="display:flex;justify-content:space-between;font-weight:500;border-top:1px solid var(--border);padding-top:6px;margin-top:4px;"><span>差異（淨收益 − 預期）</span><span id="cf-diff" style="color:var(--green-soft);">NT$0</span></div>
+      </div>
+      <button onclick="submitCashflow()" style="width:100%;padding:11px;background:var(--ink);color:var(--gold-light);border:1px solid var(--gold);border-radius:8px;font-size:14px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;">寫入收支記錄</button>
+    </div>
+
+    <!-- 收支歷史 -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="card-title" style="margin:0;">收支記錄</div>
+        <button onclick="loadCashflow()" style="padding:6px 14px;background:var(--cream);border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;color:var(--ink-soft);">重新載入</button>
+      </div>
+      <div id="cf-history">載入中...</div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -888,6 +968,125 @@ async function silentRefresh(){
       renderStats();renderAdmSched();renderAdmTable();renderPayment();
     }
   }catch(e){console.warn('自動更新失敗',e);}
+}
+
+// ================================================================
+// 收支結算
+// ================================================================
+let cfDay=0, cfSeg='前段', cfPrevBag=0;
+const CF_DAYS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
+
+function setCfDay(idx,el){
+  cfDay=idx;
+  document.querySelectorAll('#cf-day-tabs .filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  calcCf();
+}
+function setCfSeg(seg,el){
+  cfSeg=seg;
+  document.querySelectorAll('#cf-seg-tabs .filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  calcCf();
+}
+
+function calcCf(){
+  const bag=parseInt(document.getElementById('cf-bag').value)||0;
+  const ck=parseInt(document.getElementById('cf-ck').value)||0;
+  const nock=parseInt(document.getElementById('cf-nock').value)||0;
+  const refund=parseInt(document.getElementById('cf-refund').value)||0;
+  if(!bag&&!ck&&!nock){document.getElementById('cf-calc').style.display='none';return;}
+  const expected=ck*60+nock*65-refund;
+  const net=bag-cfPrevBag;
+  const diff=net-expected;
+  document.getElementById('cf-expected').textContent='NT$'+expected;
+  document.getElementById('cf-net').textContent='NT$'+net;
+  const diffEl=document.getElementById('cf-diff');
+  diffEl.textContent=(diff>=0?'+':'')+diff+' 元';
+  diffEl.style.color=diff===0?'var(--green-soft)':diff>0?'var(--stone)':'var(--red-soft)';
+  document.getElementById('cf-calc').style.display='block';
+}
+
+function saveCfInit(){
+  const v=parseInt(document.getElementById('cf-init').value)||0;
+  cfPrevBag=v;
+  localStorage.setItem('cf_init_'+SCRIPT_URL,v);
+  showToast('備用金已儲存（NT$'+v+'）');
+}
+
+async function submitCashflow(){
+  const bag=parseInt(document.getElementById('cf-bag').value)||0;
+  const ck=parseInt(document.getElementById('cf-ck').value)||0;
+  const nock=parseInt(document.getElementById('cf-nock').value)||0;
+  const refund=parseInt(document.getElementById('cf-refund').value)||0;
+  const note=document.getElementById('cf-note').value.trim();
+  if(!bag){showToast('請填寫錢袋總和');return;}
+  const net=bag-cfPrevBag;
+  const expected=ck*60+nock*65-refund;
+  const res=await apiPost({action:'addCashflow',record:{
+    date:CF_DAYS[cfDay],segment:cfSeg,
+    bagTotal:bag,net,ckCount:ck,nockCount:nock,
+    expected,diff:net-expected,refund,note,
+    createdAt:new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'})
+  }});
+  if(res?.success){
+    cfPrevBag=bag;
+    showToast('已寫入收支記錄');
+    document.getElementById('cf-bag').value='';
+    document.getElementById('cf-ck').value='';
+    document.getElementById('cf-nock').value='';
+    document.getElementById('cf-refund').value='';
+    document.getElementById('cf-note').value='';
+    document.getElementById('cf-calc').style.display='none';
+    loadCashflow();
+  } else {
+    showToast('寫入失敗，請重試');
+  }
+}
+
+async function loadCashflow(){
+  const res=await apiPost({action:'getCashflow'});
+  const c=document.getElementById('cf-history');
+  if(!res?.records?.length){c.innerHTML='<div style="color:var(--stone-light);font-size:13px;">尚無收支記錄</div>';return;}
+  const rows=res.records.map(r=>`
+    <tr>
+      <td>${r.date||''}</td>
+      <td>${r.segment||''}</td>
+      <td style="font-weight:500;">NT$${r.bagTotal||0}</td>
+      <td>NT$${r.net||0}</td>
+      <td style="font-size:11px;">${r.ckCount||0}×60 + ${r.nockCount||0}×65${r.refund?` − ${r.refund}退費`:''}</td>
+      <td>NT$${r.expected||0}</td>
+      <td style="color:${(r.diff||0)===0?'var(--green-soft)':(r.diff||0)>0?'var(--stone)':'var(--red-soft)'};font-weight:500;">${(r.diff||0)>=0?'+':''}${r.diff||0}</td>
+      <td style="color:var(--stone-light);font-size:11px;">${r.note||''}</td>
+    </tr>`).join('');
+
+  // 彙整
+  const totalNet=res.records.reduce((s,r)=>s+(r.net||0),0);
+  const totalRefund=res.records.reduce((s,r)=>s+(r.refund||0),0);
+  const initAmt=parseInt(localStorage.getItem('cf_init_'+SCRIPT_URL))||0;
+
+  c.innerHTML=`
+    <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead><tr><th>日期</th><th>時段</th><th>錢袋總和</th><th>本段淨收益</th><th>張數明細</th><th>預期收入</th><th>差異</th><th>備注</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+    <div style="margin-top:14px;padding:12px 16px;background:var(--cream-dark);border-radius:8px;font-size:13px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      <div><div style="font-size:11px;color:var(--stone);margin-bottom:2px;">總淨收益</div><div style="font-weight:500;">NT$${totalNet}</div></div>
+      <div><div style="font-size:11px;color:var(--stone);margin-bottom:2px;">退費合計</div><div style="font-weight:500;">NT$${totalRefund}</div></div>
+      <div><div style="font-size:11px;color:var(--stone);margin-bottom:2px;">總收入（扣初始）</div><div style="font-weight:500;color:var(--green-soft);">NT$${totalNet-initAmt}</div></div>
+    </div>`;
+}
+
+// 切換到收支 tab 時自動載入
+const _origSwitchTab=switchTab;
+function switchTab(tab,el){
+  _origSwitchTab(tab,el);
+  if(tab==='cashflow'){
+    const saved=localStorage.getItem('cf_init_'+SCRIPT_URL);
+    if(saved){cfPrevBag=parseInt(saved)||0;document.getElementById('cf-init').value=saved;}
+    loadCashflow();
+  }
 }
 
 let countdown=30;
