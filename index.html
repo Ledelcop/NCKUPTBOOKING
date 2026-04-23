@@ -163,9 +163,9 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
   <div class="card" style="background:var(--gold-pale);">
     <div style="font-size:13px;color:var(--ink-soft);line-height:1.9;">
       <div style="font-weight:500;color:var(--ink);margin-bottom:10px;">重要提醒</div>
-      <div>* 網路表單報名繳費：5/4(一) — 5/6(三)，12:00—13:00、17:00—18:00</div>
+      <div>繳費期限：5/4(一) — 5/6(三)，12:00—13:00、17:00—18:00</div>
       <div>繳費地點：醫學院 104 多功能實習教室前</div>
-      <div style="margin-top:4px;color:var(--red-soft);font-size:12px;">逾期未繳將自動取消資格，名額釋出給現場報名</div>
+      <div style="margin-top:4px;color:var(--red-soft);font-size:12px;">逾期未繳將自動取消資格</div>
     </div>
   </div>
   <div class="card" style="background:var(--cream-dark);border-color:var(--border);">
@@ -214,8 +214,7 @@ const CFG = {
   dates:         '5/11(一) — 5/15(五)',         // 活動日期
   time:          '19:00—21:00',                 // 活動時間
   location:      '醫學院 104 多功能實習教室',   // 活動地點
-  payOnline:     '5/4(一) — 5/6(三)，逾期取消資格',  // 網路繳費期限
-  payOnsite:     '5/4(一) — 5/8(五)，12—13時 / 17—18時', // 現場繳費
+  payDeadline:   '5/4(一) — 5/6(三)，12—13時 / 17—18時，逾期取消資格',  // 繳費期限
   payLocation:   '醫學院 104 多功能實習教室前',  // 繳費地點
   notice1:       '表單需填寫傳情人與被傳情人臉書連結，可先複製好。此份表單最多可傳給三位被傳情人。',
   notice2:       '選幾個部位就占幾個時段，每個時段 10 分鐘。每位被傳情人可各自選擇不同服務人員和時段。',
@@ -590,8 +589,7 @@ function renderBanner(){
         <div class="info-item"><span class="info-label">地點</span><span class="info-value">${CFG.location}</span></div>
       </div>
       <div>
-        <div class="info-item"><span class="info-label">網路繳費</span><span class="info-value">${CFG.payOnline}</span></div>
-        <div class="info-item"><span class="info-label">現場繳費</span><span class="info-value">${CFG.payOnsite}</span></div>
+        <div class="info-item"><span class="info-label">繳費期限</span><span class="info-value">${CFG.payDeadline}</span></div>
         <div class="info-item"><span class="info-label">放鬆部位</span><span class="info-value">${PARTS.map(p=>'<span class="tag">'+p+'</span>').join('')}</span></div>
       </div>
     </div>
