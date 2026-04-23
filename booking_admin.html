@@ -337,7 +337,11 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
         <div>
           <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">日期</label>
           <div id="cf-day-tabs" style="display:flex;gap:6px;flex-wrap:wrap;">
-            ${['5/11','5/12','5/13','5/14','5/15'].map((d,i)=>`<div class="filter-btn${i===0?' active':''}" onclick="setCfDay(${i},this)">${d}</div>`).join('')}
+            <div class="filter-btn active" onclick="setCfDay(0,this)">5/11</div>
+            <div class="filter-btn" onclick="setCfDay(1,this)">5/12</div>
+            <div class="filter-btn" onclick="setCfDay(2,this)">5/13</div>
+            <div class="filter-btn" onclick="setCfDay(3,this)">5/14</div>
+            <div class="filter-btn" onclick="setCfDay(4,this)">5/15</div>
           </div>
         </div>
         <div>
@@ -499,6 +503,11 @@ function switchTab(tab,el){
   document.getElementById('tab-'+tab).classList.add('active');
   el.classList.add('active');
   if(tab==='walkin')updateWiThOpts();
+  if(tab==='cashflow'){
+    const saved=localStorage.getItem('cf_init_'+SCRIPT_URL);
+    if(saved){cfPrevBag=parseInt(saved)||0;document.getElementById('cf-init').value=saved;}
+    loadCashflow();
+  }
 }
 
 // ── 查詢工具 ─────────────────────────────────────────────────
@@ -1076,17 +1085,6 @@ async function loadCashflow(){
       <div><div style="font-size:11px;color:var(--stone);margin-bottom:2px;">退費合計</div><div style="font-weight:500;">NT$${totalRefund}</div></div>
       <div><div style="font-size:11px;color:var(--stone);margin-bottom:2px;">總收入（扣初始）</div><div style="font-weight:500;color:var(--green-soft);">NT$${totalNet-initAmt}</div></div>
     </div>`;
-}
-
-// 切換到收支 tab 時自動載入
-const _origSwitchTab=switchTab;
-function switchTab(tab,el){
-  _origSwitchTab(tab,el);
-  if(tab==='cashflow'){
-    const saved=localStorage.getItem('cf_init_'+SCRIPT_URL);
-    if(saved){cfPrevBag=parseInt(saved)||0;document.getElementById('cf-init').value=saved;}
-    loadCashflow();
-  }
 }
 
 let countdown=30;
