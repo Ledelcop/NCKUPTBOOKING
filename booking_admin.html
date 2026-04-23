@@ -60,7 +60,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--cream);color:var(--i
 .btn-primary:hover{background:var(--ink-soft);}
 .btn-sm-success{background:var(--green-soft);color:#fff;border:none;padding:5px 10px;border-radius:6px;font-size:11px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
 .btn-sm-neutral{background:transparent;color:var(--stone);border:1px solid var(--border);padding:5px 10px;border-radius:6px;font-size:11px;font-family:'Noto Sans TC',sans-serif;cursor:pointer;}
-/* 治療師排班編輯器 */
+/* 服務人員排班編輯器 */
 .th-editor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
 .th-editor-card{border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--cream);}
 .th-name-input{border:none;background:transparent;font-size:13px;font-weight:500;font-family:'Noto Sans TC',sans-serif;color:var(--ink);padding:0;width:100%;outline:none;border-bottom:1px dashed var(--border);margin-bottom:8px;}
@@ -171,10 +171,10 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
     </div>
     <div class="stats-row" id="admin-stats"></div>
 
-    <!-- 治療師排班設定 -->
+    <!-- 服務人員排班設定 -->
     <div class="card">
-      <div class="card-title">治療師排班設定</div>
-      <div style="font-size:12px;color:var(--stone);margin-bottom:14px;">可修改治療師姓名，並勾選每天是否排班。更改後點「儲存排班」。</div>
+      <div class="card-title">服務人員排班設定</div>
+      <div style="font-size:12px;color:var(--stone);margin-bottom:14px;">可修改服務人員姓名，並勾選每天是否排班。更改後點「儲存排班」。</div>
       <div id="th-editor" style="width:100%;"></div>
       <div style="margin-top:14px;display:flex;justify-content:flex-end;">
         <button class="btn-primary" onclick="saveTh()">儲存排班</button>
@@ -184,7 +184,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
     <!-- 時段總覽 -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
-        <div class="card-title" style="margin:0;">治療師時段總覽</div>
+        <div class="card-title" style="margin:0;">服務人員時段總覽</div>
         <div class="day-tabs" style="border:none;" id="admin-day-tabs">
           <div class="day-tab active" onclick="selAdmDay(0,this)">5/11</div>
           <div class="day-tab" onclick="selAdmDay(1,this)">5/12</div>
@@ -212,11 +212,11 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
         </div>
       </div>
       <div style="margin-bottom:12px;">
-        <input type="text" id="adm-search" placeholder="搜尋傳情人或被傳情人姓名…" oninput="renderAdmTable()" style="width:100%;max-width:320px;border:1px solid var(--border);border-radius:8px;padding:8px 13px;font-size:13px;font-family:'Noto Sans TC',sans-serif;background:var(--cream);outline:none;">
+        <input type="text" id="adm-search" placeholder="🔍 搜尋傳情人或被傳情人姓名…" oninput="renderAdmTable()" style="width:100%;max-width:320px;border:1px solid var(--border);border-radius:8px;padding:8px 13px;font-size:13px;font-family:'Noto Sans TC',sans-serif;background:var(--cream);outline:none;">
       </div>
       <div style="overflow-x:auto;">
         <table class="data-table">
-          <thead><tr><th>#</th><th>傳情人</th><th>被傳情人</th><th>部位</th><th>治療師/床</th><th>日期</th><th>時段</th><th>金額</th><th>打卡</th><th>繳費</th><th>類型</th><th>操作</th></tr></thead>
+          <thead><tr><th>#</th><th>傳情人</th><th>被傳情人</th><th>部位</th><th>服務人員/床</th><th>日期</th><th>時段</th><th>金額</th><th>打卡</th><th>繳費</th><th>類型</th><th>操作</th></tr></thead>
           <tbody id="adm-tbody"></tbody>
         </table>
       </div>
@@ -229,7 +229,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
   <!-- 現場報名 -->
   <div class="tab-content" id="tab-walkin">
     <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;letter-spacing:0.04em;margin-bottom:3px;">現場報名</div>
-    <div style="font-size:13px;color:var(--stone);margin-bottom:20px;">選擇日期後再選治療師與時段，即時同步所有系統</div>
+    <div style="font-size:13px;color:var(--stone);margin-bottom:20px;">選擇日期後再選服務員與時段，即時同步所有系統</div>
     <div class="walkin-layout">
       <div>
         <div class="card">
@@ -265,7 +265,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
                 <button class="toggle-btn" onclick="selWiSeg('20-21',this)">20:00—21:00（後段）</button>
               </div>
             </div>
-            <div class="form-group"><label class="required">治療師</label><select id="wi-therapist" onchange="wiSlots=[];renderWiSlots()"><option value="">— 請先選擇日期與時段 —</option></select></div>
+            <div class="form-group"><label class="required">服務人員</label><select id="wi-therapist" onchange="wiSlots=[];renderWiSlots()"><option value="">— 請先選擇日期與時段 —</option></select></div>
             <div class="form-group">
               <label>聯絡方式</label>
               <div class="contact-opts" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;">
@@ -302,7 +302,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
             <div class="card-title" style="margin:0;">可用時段</div>
             <span class="live-indicator"><span class="live-dot"></span>即時</span>
           </div>
-          <div id="wi-slots"><div style="color:var(--stone-light);font-size:13px;">請先選擇日期與治療師</div></div>
+          <div id="wi-slots"><div style="color:var(--stone-light);font-size:13px;">請先選擇日期與服務員</div></div>
           <div class="section-divider"></div>
           <div id="wi-price" style="font-size:13px;color:var(--stone);margin-bottom:10px;"></div>
           <div id="wi-sel-display" style="font-size:13px;color:var(--gold);margin-bottom:14px;font-weight:500;"></div>
@@ -400,7 +400,7 @@ function parseBk(arr){return arr.map(b=>({
   bookerFb:b['傳情人FB']||'',recipient:b['被傳情人'],
   recipientFb:b['被傳情人FB']||'',
   parts:typeof b['部位']==='string'?b['部位'].split(',').filter(Boolean):(b['部位']||[]),
-  therapistName:b['治療師名稱']||'',therapistGender:b['性別']||'',
+  therapistName:b['服務人員名稱']||'',therapistGender:b['性別']||'',
   bed:b['床位']||'',segment:b['時段區間']||'',
   dayIdx:parseInt(b['日期索引'])||0,time:b['時段'],
   amount:parseInt(b['金額'])||0,checkin:b['打卡折扣']==='Y',
@@ -658,7 +658,7 @@ function buildMsgText(b){
 部位：${(b.parts||[]).join('、')}
 日期：${DAY_LABELS[b.dayIdx]||''} ${segLabel}
 時間：${b.time||''}
-治療師：${b.therapistName||''}（${b.bed||''}床）
+服務員：${b.therapistName||''}（${b.bed||''}床）
 地點：醫學院 104 多功能實習教室
 
 費用由傳情人支付，準時到場即可 ✨
@@ -737,15 +737,15 @@ function setWiContact(m,el){
 }
 function updateWiThOpts(){
   const ths=getTHforDaySeg(wiDay,wiSeg);
-  document.getElementById('wi-therapist').innerHTML='<option value="">— 請選擇治療師 —</option>'+ths.map(t=>'<option value="'+t.bed+'">'+t.bed+'床 · '+t.name+(t.gender?' ('+t.gender+')':'')+'</option>').join('');
+  document.getElementById('wi-therapist').innerHTML='<option value="">— 請選擇服務人員 —</option>'+ths.map(t=>'<option value="'+t.bed+'">'+t.bed+'床 · '+t.name+(t.gender?' ('+t.gender+')':'')+'</option>').join('');
 }
 function getWiPartsCount(){return[...document.querySelectorAll('#wi-parts .part-btn.selected')].length;}
 function renderWiSlots(){
   wiThBed=document.getElementById('wi-therapist').value||null;
-  // 注意：不在這裡清空 wiSlots，只有換治療師/日期/時段時才清空
+  // 注意：不在這裡清空 wiSlots，只有換服務人員/日期/時段時才清空
   document.getElementById('wi-sel-display').textContent='';
   const c=document.getElementById('wi-slots');
-  if(!wiThBed){c.innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先選擇治療師</div>';return;}
+  if(!wiThBed){c.innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先選擇服務人員</div>';return;}
   const slots=SLOTS_BY_SEG[wiSeg]||[];
   const bkd=getBkSlots(wiThBed,wiSeg,wiDay);
   const needed=getWiPartsCount()||1;
@@ -802,7 +802,7 @@ async function submitWalkin(){
   const ca=cm==='line'?(document.getElementById('wi-contact-account-line').value.trim()):cm==='gmail'?(document.getElementById('wi-contact-account-gmail').value.trim()):(document.getElementById('wi-contact-account-fb').value.trim());
   if(!bn||!bp||!rn){showToast('請填寫傳情人與被傳情人姓名');return;}
   if(!parts.length){showToast('請選擇至少一個部位');return;}
-  if(!wiThBed){showToast('請選擇治療師');return;}
+  if(!wiThBed){showToast('請選擇服務人員');return;}
   if(wiSlots.length<parts.length){showToast('還需選 '+(parts.length-wiSlots.length)+' 個時段');return;}
   const todayTh=(schedule[wiDay]||{})[wiThBed]?.[wiSeg];
   showLo('登記中...');
@@ -821,7 +821,7 @@ async function submitWalkin(){
   ['wi-booker','wi-phone','wi-recipient','wi-dept'].forEach(id=>document.getElementById(id).value='');
   document.querySelectorAll('#wi-parts .part-btn.selected').forEach(e=>e.classList.remove('selected'));
   wiSlots=[];wiThBed=null;document.getElementById('wi-therapist').value='';
-  document.getElementById('wi-slots').innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先選擇治療師</div>';
+  document.getElementById('wi-slots').innerHTML='<div style="color:var(--stone-light);font-size:13px;">請先選擇服務人員</div>';
   document.getElementById('wi-sel-display').textContent='';document.getElementById('wi-price').textContent='';
   document.getElementById('wi-contact-account-fb').value='';
   document.getElementById('wi-contact-account-line').value='';
