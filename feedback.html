@@ -69,6 +69,61 @@ select:focus{border-color:var(--border-focus);}
     <p id="hdr-desc"></p>
   </div>
   <div id="main-form">
+
+    <!-- 共同問題 -->
+    <div id="common-questions">
+      <div class="form-card visible">
+        <div class="q-number">問題 01</div>
+        <div class="q-text">系級</div>
+        <input type="text" id="inp_c1" placeholder="例：物治115" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:13px;font-family:'Noto Sans TC',sans-serif;color:var(--ink);background:var(--cream);outline:none;transition:border-color 0.15s;">
+      </div>
+      <div class="form-card visible" style="animation-delay:0.06s;">
+        <div class="q-number">問題 02</div>
+        <div class="q-text">姓名</div>
+        <input type="text" id="inp_c2" placeholder="請填寫您的姓名" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:13px;font-family:'Noto Sans TC',sans-serif;color:var(--ink);background:var(--cream);outline:none;transition:border-color 0.15s;">
+      </div>
+      <div class="form-card visible" style="animation-delay:0.12s;">
+        <div class="q-number">問題 03</div>
+        <div class="q-text">對於整體活動的流程安排？</div>
+        <div class="rating">
+          <button class="rating-btn" onclick="rate(this,'inp_c3')">1</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c3')">2</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c3')">3</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c3')">4</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c3')">5</button>
+        </div>
+        <div class="rating-labels"><span id="lbl-min-c3"></span><span id="lbl-max-c3"></span></div>
+        <input type="hidden" id="inp_c3">
+      </div>
+      <div class="form-card visible" style="animation-delay:0.18s;">
+        <div class="q-number">問題 04</div>
+        <div class="q-text">對於整體活動的時間安排？</div>
+        <div class="rating">
+          <button class="rating-btn" onclick="rate(this,'inp_c4')">1</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c4')">2</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c4')">3</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c4')">4</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c4')">5</button>
+        </div>
+        <div class="rating-labels"><span id="lbl-min-c4"></span><span id="lbl-max-c4"></span></div>
+        <input type="hidden" id="inp_c4">
+      </div>
+      <div class="form-card visible" style="animation-delay:0.24s;">
+        <div class="q-number">問題 05</div>
+        <div class="q-text">對於整體活動的場地安排？</div>
+        <div class="rating">
+          <button class="rating-btn" onclick="rate(this,'inp_c5')">1</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c5')">2</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c5')">3</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c5')">4</button>
+          <button class="rating-btn" onclick="rate(this,'inp_c5')">5</button>
+        </div>
+        <div class="rating-labels"><span id="lbl-min-c5"></span><span id="lbl-max-c5"></span></div>
+        <input type="hidden" id="inp_c5">
+      </div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--border);margin:28px 0;">
     <div class="section-label" id="role-label"></div>
     <div class="role-grid">
       <div class="role-btn" onclick="selectRole('recipient',this)">
@@ -110,14 +165,12 @@ const CFG = {
   // 頁面文字
   headerTag:   '{{activityName}} · {{year}} {{organization}}',
   headerTitle: '活動回饋表單',
-  headerDesc:  '感謝您參與本次活動，您的回饋是我們進步的動力。
-請花幾分鐘填寫此表單，謝謝您。',
+  headerDesc:  '感謝您參與本次活動，您的回饋是我們進步的動力。\n請花幾分鐘填寫此表單，謝謝您。',
   roleLabel:   '您的身份',
   submitLabel: '送出回饋',
   loadingText: '送出中，請稍候...',
   doneTitle:   '感謝您的回饋',
-  doneDesc:    '您的意見是我們最重要的養分
-期待下次活動與您相遇。',
+  doneDesc:    '您的意見是我們最重要的養分\n期待下次活動與您相遇。',
 
   // 角色按鈕
   roles: {
@@ -132,14 +185,7 @@ const CFG = {
   segments: ['前段 19:00—20:00', '後段 20:00—21:00'],
 
   // 服務人員選項
-  therapists: [
-    '林洪芷瑜（A床）',
-    '李昀妮（B床）',
-    '李冠勳（C床）',
-    '江宜蕁（D床）',
-    '王慧婷（E床）',
-    '其他 / 不清楚',
-  ],
+
 
   // 評分標籤
   ratingMin: '非常不滿意',
@@ -153,7 +199,7 @@ const CFG = {
     { id:'r4', type:'text',      text:'對於繳費 / 預約流程，有什麼建議或想說的話？', placeholder:'請填寫您的建議（選填）' },
     { id:'r5', type:'date',      text:'被傳情的日期' },
     { id:'r6', type:'segment',   text:'被傳情的時間' },
-    { id:'r7', type:'therapist', text:'為您服務的服務人員' },
+    { id:'r7', type:'text', text:'為您服務的服務人員', placeholder:'請填寫服務人員姓名' },
     { id:'r8', type:'rating',    text:'傳情對於軟組織放鬆的過程？' },
     { id:'r9', type:'text',      text:'對於軟組織放鬆過程，有什麼建議或想說的話？', placeholder:'請填寫您的建議（選填）' },
   ],
@@ -181,8 +227,7 @@ function renderPage() {
   document.title = CFG.activityName + ' · 活動回饋';
   document.getElementById('hdr-tag').textContent    = tpl(CFG.headerTag);
   document.getElementById('hdr-title').textContent  = CFG.headerTitle;
-  document.getElementById('hdr-desc').innerHTML     = CFG.headerDesc.replace(/
-/g,'<br>');
+  document.getElementById('hdr-desc').innerHTML     = CFG.headerDesc.replace(/\n/g,'<br>');
   document.getElementById('role-label').textContent  = CFG.roleLabel;
   document.getElementById('role-r-name').textContent = CFG.roles.recipient.name;
   document.getElementById('role-r-sub').textContent  = CFG.roles.recipient.sub;
@@ -192,6 +237,13 @@ function renderPage() {
   document.getElementById('loading').textContent     = CFG.loadingText;
   document.getElementById('done-title').textContent  = CFG.doneTitle;
   document.getElementById('done-desc').innerHTML     = CFG.doneDesc.replace(/\n/g,'<br>');
+  // 共同問題評分標籤
+  ['c3','c4','c5'].forEach(id => {
+    const mn = document.getElementById('lbl-min-'+id);
+    const mx = document.getElementById('lbl-max-'+id);
+    if(mn) mn.textContent = CFG.ratingMin;
+    if(mx) mx.textContent = CFG.ratingMax;
+  });
   renderQuestions('questions-recipient', CFG.recipientQuestions);
   renderQuestions('questions-staff',     CFG.staffQuestions);
 }
@@ -253,6 +305,12 @@ async function submitForm() {
   if (!currentRole) { showToast('請先選擇您的身份'); return; }
   const qs = currentRole==='recipient' ? CFG.recipientQuestions : CFG.staffQuestions;
   const data = { role: currentRole==='recipient' ? CFG.roles.recipient.name : CFG.roles.staff.name };
+  // 共同問題
+  data.c1_系級 = document.getElementById('inp_c1')?.value || '';
+  data.c2_姓名 = document.getElementById('inp_c2')?.value || '';
+  data.c3_流程安排 = document.getElementById('inp_c3')?.value || '';
+  data.c4_時間安排 = document.getElementById('inp_c4')?.value || '';
+  data.c5_場地安排 = document.getElementById('inp_c5')?.value || '';
   qs.forEach(q => {
     const el = document.getElementById('inp_'+q.id);
     data['q'+q.id+'_'+q.text.slice(0,8)] = el ? el.value : '';
