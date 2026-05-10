@@ -181,7 +181,8 @@ function renderPage() {
   document.title = CFG.activityName + ' · 活動回饋';
   document.getElementById('hdr-tag').textContent    = tpl(CFG.headerTag);
   document.getElementById('hdr-title').textContent  = CFG.headerTitle;
-  document.getElementById('hdr-desc').innerHTML     = CFG.headerDesc.replace(/\n/g,'<br>');
+  document.getElementById('hdr-desc').innerHTML     = CFG.headerDesc.replace(/
+/g,'<br>');
   document.getElementById('role-label').textContent  = CFG.roleLabel;
   document.getElementById('role-r-name').textContent = CFG.roles.recipient.name;
   document.getElementById('role-r-sub').textContent  = CFG.roles.recipient.sub;
