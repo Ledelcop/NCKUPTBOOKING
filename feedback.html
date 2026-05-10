@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>活動回饋</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1814;--gold:#B8955A;--gold-light:#D4B483;--gold-pale:#F5EDD8;
+  --cream:#FAF7F2;--stone:#7A7168;--stone-light:#ADA49B;
+  --border:rgba(184,149,90,0.25);--border-focus:rgba(184,149,90,0.6);
+  --white:#fff;--shadow:0 2px 24px rgba(26,24,20,0.07);--r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Noto Sans TC",sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 40% at 90% 10%,rgba(184,149,90,0.08) 0%,transparent 60%),
+             radial-gradient(ellipse 50% 50% at 10% 90%,rgba(184,149,90,0.06) 0%,transparent 60%);}
+.page{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:40px 20px 80px;}
+.header{text-align:center;margin-bottom:40px;}
+.header-tag{display:inline-block;font-size:11px;font-family:"Cormorant Garamond",serif;letter-spacing:0.2em;color:var(--gold);border:1px solid var(--border);padding:4px 16px;border-radius:20px;margin-bottom:16px;}
+.header h1{font-family:"Cormorant Garamond",serif;font-size:clamp(28px,5vw,40px);font-weight:300;letter-spacing:0.04em;line-height:1.2;margin-bottom:10px;}
+.header p{font-size:13px;color:var(--stone);line-height:1.8;}
+.section-label{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:12px;}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;}
+.role-btn{border:1.5px solid var(--border);border-radius:var(--r);padding:24px 16px;text-align:center;cursor:pointer;background:var(--white);transition:all 0.2s;}
+.role-btn:hover{border-color:var(--gold-light);background:var(--cream);}
+.role-btn.active{border-color:var(--gold);background:var(--gold-pale);box-shadow:0 0 0 3px rgba(184,149,90,0.15);}
+.role-btn .role-name{font-size:14px;font-weight:500;color:var(--ink);display:block;margin-bottom:4px;}
+.role-btn .role-sub{font-size:11px;color:var(--stone);display:block;}
+.role-btn.active .role-name{color:var(--gold);}
+.form-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:16px;box-shadow:var(--shadow);display:none;animation:fadeUp 0.3s ease;}
+.form-card.visible{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.q-number{font-family:"Cormorant Garamond",serif;font-size:12px;color:var(--gold);letter-spacing:0.1em;margin-bottom:6px;}
+.q-text{font-size:15px;font-weight:500;color:var(--ink);line-height:1.5;margin-bottom:16px;}
+.rating{display:flex;gap:8px;flex-wrap:wrap;}
+.rating-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--cream);font-size:14px;font-weight:500;color:var(--stone);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+.rating-btn:hover{border-color:var(--gold);color:var(--gold);}
+.rating-btn.selected{background:var(--gold);border-color:var(--gold);color:white;}
+.rating-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--stone-light);width:100%;max-width:calc(44px*5 + 8px*4);}
+textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;font-family:"Noto Sans TC",sans-serif;color:var(--ink);background:var(--cream);resize:vertical;min-height:90px;outline:none;transition:border-color 0.15s;line-height:1.7;}
+textarea:focus{border-color:var(--border-focus);}
+textarea::placeholder{color:var(--stone-light);}
+select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:13px;font-family:"Noto Sans TC",sans-serif;color:var(--ink);background:var(--cream);outline:none;appearance:none;cursor:pointer;transition:border-color 0.15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A7168' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+select:focus{border-color:var(--border-focus);}
+.submit-area{margin-top:32px;display:none;}
+.submit-area.visible{display:block;}
+.btn-submit{width:100%;padding:16px;background:var(--ink);color:var(--gold-light);border:1px solid var(--gold);border-radius:var(--r);font-size:15px;font-family:"Noto Sans TC",sans-serif;font-weight:500;cursor:pointer;letter-spacing:0.06em;transition:all 0.2s;}
+.btn-submit:hover{background:#2a2520;}
+.btn-submit:disabled{opacity:0.5;cursor:not-allowed;}
+.loading{display:none;text-align:center;padding:20px;font-size:13px;color:var(--stone);}
+.loading.visible{display:block;}
+.done-screen{display:none;text-align:center;padding:80px 20px;}
+.done-screen.visible{display:block;}
+.done-screen h2{font-family:"Cormorant Garamond",serif;font-size:32px;font-weight:300;color:var(--ink);margin-bottom:12px;}
+.done-screen p{font-size:14px;color:var(--stone);line-height:1.8;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--gold-light);padding:10px 24px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:999;white-space:nowrap;}
+.toast.show{opacity:1;}
+@media(max-width:480px){.page{padding:24px 14px 60px;}.form-card{padding:20px 16px;}.role-btn{padding:18px 12px;}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="header-tag" id="hdr-tag"></div>
+    <h1 id="hdr-title"></h1>
+    <p id="hdr-desc"></p>
+  </div>
+  <div id="main-form">
+    <div class="section-label" id="role-label"></div>
+    <div class="role-grid">
+      <div class="role-btn" onclick="selectRole('recipient',this)">
+        <span class="role-name" id="role-r-name"></span>
+        <span class="role-sub" id="role-r-sub"></span>
+      </div>
+      <div class="role-btn" onclick="selectRole('staff',this)">
+        <span class="role-name" id="role-s-name"></span>
+        <span class="role-sub" id="role-s-sub"></span>
+      </div>
+    </div>
+    <div id="questions-recipient"></div>
+    <div id="questions-staff"></div>
+    <div class="submit-area" id="submit-area">
+      <button class="btn-submit" id="btn-submit" onclick="submitForm()"></button>
+    </div>
+    <div class="loading" id="loading"></div>
+  </div>
+  <div class="done-screen" id="done-screen">
+    <h2 id="done-title"></h2>
+    <p id="done-desc"></p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+// ================================================================
+// 設定區 — 所有需要修改的內容都在這裡
+// ================================================================
+
+const SCRIPT_URL = '在此貼上 Apps Script 網址';
+const SECRET_KEY = '與 feedback_apps_script.gs 的 SECRET_KEY 一致即可（可與主系統不同）';
+
+const CFG = {
+  // 活動資訊
+  activityName: '筋夾！？皮洽鬆？',
+  year:         '2026',
+  organization: '成大物治週',
+
+  // 頁面文字
+  headerTag:   '{{activityName}} · {{year}} {{organization}}',
+  headerTitle: '活動回饋表單',
+  headerDesc:  '感謝您參與本次活動，您的回饋是我們進步的動力。
+請花幾分鐘填寫此表單，謝謝您。',
+  roleLabel:   '您的身份',
+  submitLabel: '送出回饋',
+  loadingText: '送出中，請稍候...',
+  doneTitle:   '感謝您的回饋',
+  doneDesc:    '您的意見是我們最重要的養分
+期待下次活動與您相遇。',
+
+  // 角色按鈕
+  roles: {
+    recipient: { name: '被傳情人 / 傳情人', sub: '參與傳情服務的同學' },
+    staff:     { name: '服務人員 / 櫃檯',   sub: '活動工作人員' },
+  },
+
+  // 活動日期選項
+  dates: ['5/11(一)', '5/12(二)', '5/13(三)', '5/14(四)', '5/15(五)'],
+
+  // 時段選項
+  segments: ['前段 19:00—20:00', '後段 20:00—21:00'],
+
+  // 服務人員選項
+  therapists: [
+    '林洪芷瑜（A床）',
+    '李昀妮（B床）',
+    '李冠勳（C床）',
+    '江宜蕁（D床）',
+    '王慧婷（E床）',
+    '其他 / 不清楚',
+  ],
+
+  // 評分標籤
+  ratingMin: '非常不滿意',
+  ratingMax: '非常滿意',
+
+  // 被傳情人 / 傳情人問題
+  recipientQuestions: [
+    { id:'r1', type:'rating',    text:'對於報名表單設計的部分？' },
+    { id:'r2', type:'text',      text:'對於報名表單設計，有什麼建議或想說的話？', placeholder:'請填寫您的建議（選填）' },
+    { id:'r3', type:'rating',    text:'對於繳費 / 預約的流程？' },
+    { id:'r4', type:'text',      text:'對於繳費 / 預約流程，有什麼建議或想說的話？', placeholder:'請填寫您的建議（選填）' },
+    { id:'r5', type:'date',      text:'被傳情的日期' },
+    { id:'r6', type:'segment',   text:'被傳情的時間' },
+    { id:'r7', type:'therapist', text:'為您服務的服務人員' },
+    { id:'r8', type:'rating',    text:'傳情對於軟組織放鬆的過程？' },
+    { id:'r9', type:'text',      text:'對於軟組織放鬆過程，有什麼建議或想說的話？', placeholder:'請填寫您的建議（選填）' },
+  ],
+
+  // 服務人員 / 櫃檯問題
+  staffQuestions: [
+    { id:'s1', type:'rating', text:'對於招工表單的設計？' },
+    { id:'s2', type:'text',   text:'對於招工表單，有什麼建議或想說的話？', placeholder:'請填寫您的建議（選填）' },
+    { id:'s3', type:'rating', text:'對於活動系統的設計（預約系統、後台管理等）？' },
+    { id:'s4', type:'text',   text:'對於活動系統設計，有什麼建議或想說的話？', placeholder:'請填寫您的建議（選填）' },
+    { id:'s5', type:'rating', text:'對於活動整體過程？' },
+    { id:'s6', type:'text',   text:'對於活動整體過程，有什麼建議或想說的話？', placeholder:'請填寫您的建議（選填）' },
+  ],
+};
+
+// ================================================================
+// 以下不需要修改
+// ================================================================
+
+function tpl(str) {
+  return str.replace(/\{\{(\w+)\}\}/g, (_, k) => CFG[k] || '');
+}
+
+function renderPage() {
+  document.title = CFG.activityName + ' · 活動回饋';
+  document.getElementById('hdr-tag').textContent    = tpl(CFG.headerTag);
+  document.getElementById('hdr-title').textContent  = CFG.headerTitle;
+  document.getElementById('hdr-desc').innerHTML     = CFG.headerDesc.replace(/\n/g,'<br>');
+  document.getElementById('role-label').textContent  = CFG.roleLabel;
+  document.getElementById('role-r-name').textContent = CFG.roles.recipient.name;
+  document.getElementById('role-r-sub').textContent  = CFG.roles.recipient.sub;
+  document.getElementById('role-s-name').textContent = CFG.roles.staff.name;
+  document.getElementById('role-s-sub').textContent  = CFG.roles.staff.sub;
+  document.getElementById('btn-submit').textContent  = CFG.submitLabel;
+  document.getElementById('loading').textContent     = CFG.loadingText;
+  document.getElementById('done-title').textContent  = CFG.doneTitle;
+  document.getElementById('done-desc').innerHTML     = CFG.doneDesc.replace(/\n/g,'<br>');
+  renderQuestions('questions-recipient', CFG.recipientQuestions);
+  renderQuestions('questions-staff',     CFG.staffQuestions);
+}
+
+function renderQuestions(containerId, questions) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  questions.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'form-card';
+    const num = String(i+1).padStart(2,'0');
+    let inner = '<div class="q-number">問題 ' + num + '</div><div class="q-text">' + q.text + '</div>';
+    if (q.type === 'rating') {
+      inner += '<div class="rating">';
+      for(let n=1;n<=5;n++) inner += '<button class="rating-btn" onclick="rate(this,\'inp_'+q.id+'\')">'+n+'</button>';
+      inner += '</div><div class="rating-labels"><span>'+CFG.ratingMin+'</span><span>'+CFG.ratingMax+'</span></div>';
+      inner += '<input type="hidden" id="inp_'+q.id+'">';
+    } else if (q.type === 'text') {
+      inner += '<textarea id="inp_'+q.id+'" placeholder="'+(q.placeholder||'')+'"></textarea>';
+    } else {
+      const opts = q.type==='date' ? CFG.dates : q.type==='segment' ? CFG.segments : CFG.therapists;
+      inner += '<select id="inp_'+q.id+'"><option value="">— 請選擇 —</option>';
+      opts.forEach(o => { inner += '<option>'+o+'</option>'; });
+      inner += '</select>';
+    }
+    card.innerHTML = inner;
+    container.appendChild(card);
+  });
+}
+
+let currentRole = '';
+
+function selectRole(role, el) {
+  currentRole = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  ['questions-recipient','questions-staff'].forEach(id => {
+    document.getElementById(id).querySelectorAll('.form-card').forEach(c => c.classList.remove('visible'));
+  });
+  const cards = document.getElementById(role==='recipient'?'questions-recipient':'questions-staff').querySelectorAll('.form-card');
+  setTimeout(() => { cards.forEach((c,i) => setTimeout(() => c.classList.add('visible'), i*60)); }, 50);
+  document.getElementById('submit-area').classList.add('visible');
+}
+
+function rate(btn, fieldId) {
+  btn.closest('.form-card').querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById(fieldId).value = btn.textContent;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+async function submitForm() {
+  if (!currentRole) { showToast('請先選擇您的身份'); return; }
+  const qs = currentRole==='recipient' ? CFG.recipientQuestions : CFG.staffQuestions;
+  const data = { role: currentRole==='recipient' ? CFG.roles.recipient.name : CFG.roles.staff.name };
+  qs.forEach(q => {
+    const el = document.getElementById('inp_'+q.id);
+    data['q'+q.id+'_'+q.text.slice(0,8)] = el ? el.value : '';
+  });
+  data.createdAt = new Date().toLocaleString('zh-TW', { timeZone:'Asia/Taipei' });
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  document.getElementById('submit-area').style.display = 'none';
+  document.getElementById('loading').classList.add('visible');
+  try {
+    await fetch(SCRIPT_URL, { method:'POST', body:JSON.stringify({ action:'addFeedback', secret:SECRET_KEY, data }) });
+    document.getElementById('loading').classList.remove('visible');
+    document.getElementById('main-form').style.display = 'none';
+    document.getElementById('done-screen').classList.add('visible');
+  } catch(e) {
+    document.getElementById('loading').classList.remove('visible');
+    document.getElementById('submit-area').style.display = 'block';
+    btn.disabled = false;
+    showToast('送出失敗，請重試');
+  }
+}
+
+window.addEventListener('DOMContentLoaded', renderPage);
+</script>
+</body>
+</html>
