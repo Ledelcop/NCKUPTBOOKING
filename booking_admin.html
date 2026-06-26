@@ -186,13 +186,8 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
         <div class="card-title" style="margin:0;">服務人員時段總覽</div>
-        <div class="day-tabs" style="border:none;" id="admin-day-tabs">
-          <div class="day-tab active" onclick="selAdmDay(0,this)">6/11</div>
-          <div class="day-tab" onclick="selAdmDay(1,this)">6/12</div>
-          <div class="day-tab" onclick="selAdmDay(2,this)">6/13</div>
-          <div class="day-tab" onclick="selAdmDay(3,this)">6/14</div>
-          <div class="day-tab" onclick="selAdmDay(4,this)">6/15</div>
-        </div>
+        <!-- 日期分頁由 JS 依 DAYS 自動產生，不要手動寫死 -->
+        <div class="day-tabs" style="border:none;" id="admin-day-tabs"></div>
       </div>
       <div class="schedule-wrap"><div class="schedule-grid" id="adm-sched"></div></div>
     </div>
@@ -337,7 +332,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
         <div>
           <label style="font-size:11px;color:var(--stone);display:block;margin-bottom:4px;">日期</label>
           <div id="cf-day-tabs" style="display:flex;gap:6px;flex-wrap:wrap;">
-            <div class="filter-btn active" onclick="setCfDay(0,this)"></div>
+            <div class="filter-btn active" onclick="setCfDay(0,this)">5/4</div>
             <div class="filter-btn" onclick="setCfDay(1,this)">5/5</div>
             <div class="filter-btn" onclick="setCfDay(2,this)">5/6</div>
             <div class="filter-btn" onclick="setCfDay(3,this)">5/7</div>
@@ -406,7 +401,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 
 <script>
 // ================================================================
-//  設定區 — 所有需要修改的內容都在這裡
+// ⚙️ 設定區 — 所有需要修改的內容都在這裡
 // ================================================================
 
 // 【必填】後台登入密碼
@@ -417,13 +412,13 @@ const SECRET_KEY = 'DCPT116';
 
 // 【活動資訊】
 const CFG = {
-  activityName:  '測試測試',
+  activityName:  '筋夾！？皮洽鬆？',
   price:         65,     // 每部位價格（NT$）
   discount:      5,      // 打卡折扣（NT$）
   slotMin:       10,     // 每時段分鐘數
-  dates:         '6/11(一) — 6/15(五)',
-  time:          '測試測試',
-  location:      '測試測試',
+  dates:         '5/11(一) — 5/15(五)',
+  time:          '19:00—21:00',
+  location:      '醫學院 104 多功能實習教室',
 };
 
 // 同步標題：改上面的 CFG.activityName 即可，導覽列與分頁標題會一起更新
@@ -436,7 +431,9 @@ const CFG = {
 
 // ================================================================
 
-const DAYS=['6/11(一)','6/12(二)','6/13(三)','6/14(四)','6/15(五)'];
+// ★【活動日期 — 整個系統只需改這一行】每年沿用時改這裡即可。
+//   格式：'月/日(週)'。上方日期分頁、下方排班表頭都會自動跟著變。
+const DAYS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
 const PRICE=CFG.price,DISC=CFG.discount;
 const SEGS=['19-20','20-21'];
 const SEG_LABEL={'19-20':'前段 19—20','20-21':'後段 20—21'};
@@ -539,7 +536,7 @@ function getBkSlots(bed,seg,dayIdx){return bookings.filter(b=>b.bed===bed&&b.seg
 function getBkForSlot(bed,seg,dayIdx,slot){return bookings.find(b=>b.bed===bed&&b.segment===seg&&b.dayIdx===dayIdx&&b.time===slot);}
 function cLabel(m){return m==='fb'?'FB Messenger':m==='line'?'LINE':'人工傳訊';}
 
-function renderAll(){renderStats();renderThEditor();renderAdmSched();renderAdmTable();renderPayment();}
+function renderAll(){renderStats();renderThEditor();renderAdmSched();renderAdmTable();renderPayment();renderAdmDayTabs();}
 
 // ── Stats ─────────────────────────────────────────────────────
 function renderStats(){
@@ -614,7 +611,8 @@ async function saveTh(){
 }
 
 // ── 時段總覽 ──────────────────────────────────────────────────
-function selAdmDay(idx,el){admDay=idx;document.querySelectorAll('#admin-day-tabs .day-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderAdmSched();}
+function renderAdmDayTabs(){const el=document.getElementById('admin-day-tabs');if(!el)return;el.innerHTML=DAYS.map((d,di)=>`<div class="day-tab ${di===admDay?'active':''}" onclick="selAdmDay(${di})">${d.replace(/\(.*\)/,'')}</div>`).join('');}
+function selAdmDay(idx){admDay=idx;renderAdmDayTabs();renderAdmSched();}
 function renderAdmSched(){
   // 以床位為欄，行顯示時段
   const dayMap=schedule[admDay]||{};
