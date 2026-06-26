@@ -124,7 +124,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 <body>
 
 <nav class="top-nav">
-  <span class="brand-en">筋夾！？皮洽鬆？ · 後台管理</span>
+  <span class="brand-en" id="brand-en">筋夾！？皮洽鬆？ · 後台管理</span>
   <div class="nav-right">
     <button class="tab-btn active" onclick="switchTab('admin',this)">後台總覽</button>
     <button class="tab-btn" onclick="switchTab('walkin',this)">現場報名</button>
@@ -406,7 +406,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 
 <script>
 // ================================================================
-// ⚙️ 設定區 — 所有需要修改的內容都在這裡
+//  設定區 — 所有需要修改的內容都在這裡
 // ================================================================
 
 // 【必填】後台登入密碼
@@ -417,14 +417,22 @@ const SECRET_KEY = 'DCPT116';
 
 // 【活動資訊】
 const CFG = {
-  activityName:  '筋夾！？皮洽鬆？',
+  activityName:  '測試測試',
   price:         65,     // 每部位價格（NT$）
   discount:      5,      // 打卡折扣（NT$）
   slotMin:       10,     // 每時段分鐘數
-  dates:         '5/11(一) — 5/15(五)',
-  time:          '19:00—21:00',
-  location:      '醫學院 104 多功能實習教室',
+  dates:         '6/11(一) — 6/15(五)',
+  time:          '測試測試',
+  location:      '測試測試',
 };
+
+// 同步標題：改上面的 CFG.activityName 即可，導覽列與分頁標題會一起更新
+(function(){
+  const SUFFIX = ' · 後台管理';
+  document.title = CFG.activityName + SUFFIX;
+  const be = document.getElementById('brand-en');
+  if (be) be.textContent = CFG.activityName + SUFFIX;
+})();
 
 // ================================================================
 
@@ -437,11 +445,14 @@ const ALL_SLOTS=buildSlots();
 const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
 const BEDS=['A','B','C','D','E'];
 
+function isAuthed(){return sessionStorage.getItem('adminAuth')==='1';}
+
 function checkLogin(){
   const v=document.getElementById('login-input').value.trim();
   if(v===String(ADMIN_PASSWORD)){
     document.getElementById('login-overlay').style.display='none';
     sessionStorage.setItem('adminAuth','1');
+    if(SCRIPT_URL)loadData();          // 登入後才開始連線載入
   }else if(v.length>=1){
     document.getElementById('login-err').textContent='密碼錯誤，請重試';
     document.getElementById('login-input').value='';
@@ -942,8 +953,8 @@ if(_saved){SCRIPT_URL=_saved;document.getElementById('url-input').value=_saved;}
 rawGrid=BEDS.flatMap(b=>SEGS.map(s=>({bed:b,segment:s,names:['','','','','']})));
 renderAll();
 
-// 如果有網址，自動連線
-if(SCRIPT_URL)loadData();
+// 已登入且有網址才自動連線（未登入時不向伺服器要資料，也避免登入頁狂跳錯誤）
+if(SCRIPT_URL && isAuthed())loadData();
 
 // ── 音效（"叮"）───────────────────────────────────────────────
 function playDing(){
@@ -1099,7 +1110,7 @@ setInterval(()=>{
   countdown--;
   const el=document.getElementById('refresh-countdown');
   if(el)el.textContent=countdown+'s';
-  if(countdown<=0){countdown=30;silentRefresh();}
+  if(countdown<=0){countdown=30;if(isAuthed())silentRefresh();}
 },1000);
 </script>
 </body>
