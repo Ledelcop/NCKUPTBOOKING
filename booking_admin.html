@@ -246,13 +246,8 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
             </div>
             <div class="form-group">
               <label class="required">日期</label>
-              <div class="filter-bar" id="wi-day-tabs" style="margin:0;">
-                <div class="filter-btn active" onclick="selWiDay(0,this)">5/11</div>
-                <div class="filter-btn" onclick="selWiDay(1,this)">5/12</div>
-                <div class="filter-btn" onclick="selWiDay(2,this)">5/13</div>
-                <div class="filter-btn" onclick="selWiDay(3,this)">5/14</div>
-                <div class="filter-btn" onclick="selWiDay(4,this)">5/15</div>
-              </div>
+              <!-- 日期由 JS 依 DAYS 自動產生，不要手動寫死 -->
+              <div class="filter-bar" id="wi-day-tabs" style="margin:0;"></div>
             </div>
             <div class="form-group">
               <label class="required">時段</label>
@@ -412,11 +407,11 @@ const SECRET_KEY = 'DCPT116';
 
 // 【活動資訊】
 const CFG = {
-  activityName:  '筋夾！？皮洽鬆？',
+  activityName:  'nihao',
   price:         65,     // 每部位價格（NT$）
   discount:      5,      // 打卡折扣（NT$）
   slotMin:       10,     // 每時段分鐘數
-  dates:         '5/11(一) — 5/15(五)',
+  dates:         '6/11(一) — 6/15(五)',
   time:          '19:00—21:00',
   location:      '醫學院 104 多功能實習教室',
 };
@@ -711,6 +706,8 @@ function renderAdmTable(){
     const gLabel=g.therapistGender?`(${g.therapistGender})`:'';
     const disc=g.checkin?g.parts.length*DISC:0;
     const slotsStr=g.slots.length>1?`${g.slots[0]} ~ ${g.slots[g.slots.length-1].split('-')[1]}`:(g.slots[0]||'');
+    const msgTime=g.slots.length>1?`${g.slots[0].split('-')[0]}-${g.slots[g.slots.length-1].split('-')[1]}`:(g.slots[0]||'');
+    const msgDataAttr=JSON.stringify({recipient:g.recipient,parts:g.parts,dayIdx:g.dayIdx,segment:g.segment,time:msgTime,therapistName:g.therapistName,bed:g.bed}).replace(/'/g,"&apos;");
     return`<tr>
       <td style="font-size:12px;font-weight:500;">${g.ids[0]}</td>
       <td>${g.booker}${g.bookerDept?`<div style="font-size:10px;color:var(--stone-light);">${g.bookerDept}</div>`:''}</td><td>${g.recipient}</td>
@@ -725,7 +722,7 @@ function renderAdmTable(){
       <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
         ${g.payment!=='paid'?`<button class="btn-sm-success" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="markGroupPaid(JSON.parse(this.dataset.ids))">收款</button>`:''}
         ${!g.checkin?`<button class="btn-sm-neutral" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="markGroupCk(JSON.parse(this.dataset.ids))">打卡</button>`:''}
-        ${g.contactMethod==='fb'||g.contactMethod==='line'?`<button class="btn-sm-neutral" onclick="copyMsg('${g.id}')">複製</button>`:''}
+        ${g.contactMethod==='fb'||g.contactMethod==='line'?`<button class="btn-sm-neutral" data-msg='${msgDataAttr}' onclick="copyMsg(JSON.parse(this.dataset.msg))">複製</button>`:''}
         ${g.contactMethod==='fb'||g.contactMethod==='line'?`<button class="btn-sm-neutral" onclick="openContact(bookings.find(b=>b.id==='${g.id}'))">${g.contactMethod==='fb'?'FB':'LINE'}</button>`:''}
         <button class="btn-sm-neutral" data-ids='${JSON.stringify(g.ids).replace(/'/g,"&apos;")}' onclick="delGroupBk(JSON.parse(this.dataset.ids))">取消</button>
       </div></td>
@@ -754,14 +751,13 @@ async function markNtf(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.no
 async function delBk(id){bookings=bookings.filter(b=>b.id!==id);renderAll();apiPost({action:'deleteBooking',id});showToast('預約已取消');}
 
 function buildMsgText(b){
-  const DAY_LABELS=['6/11(一)','6/12(二)','6/13(三)','6/14(四)','6/15(五)'];
   const segLabel=b.segment==='19-20'?'前段 19:00—20:00':'後段 20:00—21:00';
   return `【筋夾！？皮洽鬆？傳情通知】
 有人傳情給你！
 
 被傳情人：${b.recipient}
 部位：${(b.parts||[]).join('、')}
-日期：${DAY_LABELS[b.dayIdx]||''} ${segLabel}
+日期：${DAYS[b.dayIdx]||''} ${segLabel}
 時間：${b.time||''}
 服務員：${b.therapistName||''}（${b.bed||''}床）
 地點：醫學院 104 多功能實習教室
@@ -788,8 +784,8 @@ function copyPayReminder(){
   navigator.clipboard.writeText(PAY_REMINDER).then(()=>showToast('繳費提醒已複製！'));
 }
 
-function copyMsg(id){
-  const b=bookings.find(b=>b.id===id);
+function copyMsg(arg){
+  const b=(arg&&typeof arg==='object')?arg:bookings.find(x=>x.id===arg);
   if(!b)return;
   navigator.clipboard.writeText(buildMsgText(b)).then(()=>showToast('訊息已複製！'));
 }
@@ -830,7 +826,8 @@ function renderPayment(){
 // ── 現場報名 ──────────────────────────────────────────────────
 let wiContactMethod='fb';
 let wiSlots=[];
-function selWiDay(idx,el){wiDay=idx;wiThBed=null;wiSlots=[];document.querySelectorAll('#wi-day-tabs .filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('wi-sel-display').textContent='';updateWiThOpts();renderWiSlots();}
+function renderWiDayTabs(){const el=document.getElementById('wi-day-tabs');if(!el)return;el.innerHTML=DAYS.map((d,di)=>`<div class="filter-btn ${di===wiDay?'active':''}" onclick="selWiDay(${di})">${d.replace(/\(.*\)/,'')}</div>`).join('');}
+function selWiDay(idx){wiDay=idx;wiThBed=null;wiSlots=[];renderWiDayTabs();document.getElementById('wi-sel-display').textContent='';updateWiThOpts();renderWiSlots();}
 function selWiSeg(seg,el){wiSeg=seg;wiThBed=null;wiSlots=[];document.querySelectorAll('#wi-seg-toggle .toggle-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('wi-sel-display').textContent='';updateWiThOpts();renderWiSlots();}
 function setWiContact(m,el){
   wiContactMethod=m;
@@ -950,6 +947,7 @@ if(_saved){SCRIPT_URL=_saved;document.getElementById('url-input').value=_saved;}
 // 不管有沒有連線，先渲染空白狀態讓按鈕可以使用
 rawGrid=BEDS.flatMap(b=>SEGS.map(s=>({bed:b,segment:s,names:['','','','','']})));
 renderAll();
+renderWiDayTabs();
 
 // 已登入且有網址才自動連線（未登入時不向伺服器要資料，也避免登入頁狂跳錯誤）
 if(SCRIPT_URL && isAuthed())loadData();
