@@ -754,7 +754,7 @@ async function markNtf(id){const b=bookings.find(b=>b.id===id);if(!b)return;b.no
 async function delBk(id){bookings=bookings.filter(b=>b.id!==id);renderAll();apiPost({action:'deleteBooking',id});showToast('預約已取消');}
 
 function buildMsgText(b){
-  const DAY_LABELS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
+  const DAY_LABELS=['6/11(一)','6/12(二)','6/13(三)','6/14(四)','6/15(五)'];
   const segLabel=b.segment==='19-20'?'前段 19:00—20:00':'後段 20:00—21:00';
   return `【筋夾！？皮洽鬆？傳情通知】
 有人傳情給你！
