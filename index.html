@@ -187,9 +187,9 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 <script>
 // ★【活動日期 — 整個系統只需改這一行】每年沿用時改這裡即可。
 //   格式：'月/日(週)'，週填 一二三四五六日。分頁標籤、確認頁、上方 banner 都會自動跟著變。
-const DAYS=['6/11(一)','6/12(二)','6/13(三)','6/14(四)','6/15(五)'];
+const DAYS=['5/11(一)','5/12(二)','5/13(三)','5/14(四)','5/15(五)'];
 const PARTS=['上肢','下肢','背部','肩頸'];
-const PRICE=70,DISC=5;
+const PRICE=65,DISC=5;
 const SEGS=['19-20','20-21'];
 function buildSlots(){const s=[];let h=19,m=0;for(let i=0;i<10;i++){const st=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;let eh=h,em=m+12;if(em>=60){eh++;em-=60;}s.push(`${st}-${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}`);m+=12;if(m>=60){h++;m-=60;}}return s;}
 const ALL_SLOTS=buildSlots();
@@ -208,15 +208,15 @@ const SECRET_KEY = 'DCPT116';
 
 // 【活動資訊】顯示在表單頂部的活動說明
 const CFG = {
-  activityName:  '測試',          // 活動名稱
+  activityName:  '筋夾！？皮洽鬆？',          // 活動名稱
   subtitle:      '軟組織放鬆 · 傳情預約',      // 副標題
-  price:         70,                            // 每部位價格
+  price:         65,                            // 每部位價格
   discount:      5,                             // 打卡折扣
   slotMin:       10,                            // 每時段分鐘數
   dates:         DAYS[0]+' — '+DAYS[DAYS.length-1],  // 活動日期（自動取自上方 DAYS 的頭尾，不用另外改）
   time:          '19:00—21:00',                 // 活動時間
   location:      '醫學院 104 多功能實習教室',   // 活動地點
-  payDeadline:   '6/4(一) — 6/6(三)，12—13時 / 17—18時，逾期取消資格',  // 繳費期限
+  payDeadline:   '5/4(一) — 5/6(三)，12—13時 / 17—18時，逾期取消資格',  // 繳費期限
   payLocation:   '醫學院 104 多功能實習教室前',  // 繳費地點
   notice1:       '表單需填寫傳情人與被傳情人臉書連結，可先複製好。此份表單最多可傳給三位被傳情人。',
   notice2:       '選幾個部位就占幾個時段，每個時段 10 分鐘。每位被傳情人可各自選擇不同服務人員和時段。',
