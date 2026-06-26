@@ -189,7 +189,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 //   格式：'月/日(週)'，週填 一二三四五六日。分頁標籤、確認頁、上方 banner 都會自動跟著變。
 const DAYS=['6/11(一)','6/12(二)','6/13(三)','6/14(四)','6/15(五)'];
 const PARTS=['上肢','下肢','背部','肩頸'];
-const PRICE=65,DISC=5;
+const PRICE=70,DISC=5;
 const SEGS=['19-20','20-21'];
 function buildSlots(){const s=[];let h=19,m=0;for(let i=0;i<10;i++){const st=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;let eh=h,em=m+12;if(em>=60){eh++;em-=60;}s.push(`${st}-${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}`);m+=12;if(m>=60){h++;m-=60;}}return s;}
 const ALL_SLOTS=buildSlots();
