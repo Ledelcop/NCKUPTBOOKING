@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="page-title">測試測試 · 傳情預約</title>
+<title id="page-title">筋夾！？皮洽鬆？ · 傳情預約</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{--gold:#B8955A;--gold-light:#D4B483;--gold-pale:#F5EDD8;--ink:#1A1814;--ink-soft:#3D3830;--stone:#7A7168;--stone-light:#ADA49B;--cream:#FAF7F2;--cream-dark:#F0EBE0;--white:#FFFFFF;--red-soft:#C0392B;--red-pale:#FCEAEA;--green-soft:#27AE60;--green-pale:#E8F5EE;--border:rgba(184,149,90,0.25);--border-light:rgba(184,149,90,0.12);--shadow:0 2px 20px rgba(26,24,20,0.06);--shadow-md:0 4px 32px rgba(26,24,20,0.10);}
@@ -107,8 +107,8 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 </head>
 <body>
 <nav class="top-nav">
-  <span class="brand-en">筋夾！？皮洽鬆？</span>
-  <span class="brand-zh">軟組織放鬆 · 傳情預約</span>
+  <span class="brand-en" id="brand-en">筋夾！？皮洽鬆？</span>
+  <span class="brand-zh" id="brand-zh">軟組織放鬆 · 傳情預約</span>
 </nav>
 <div class="loading-overlay" id="lo" style="display:none;"><div class="loading-box"><div class="loading-spinner"></div><div style="font-size:13px;color:var(--stone);" id="lo-text">載入中...</div></div></div>
 <div class="toast" id="toast"></div>
@@ -195,7 +195,7 @@ const SLOTS_BY_SEG={'19-20':ALL_SLOTS.slice(0,5),'20-21':ALL_SLOTS.slice(5,10)};
 
 // ↓↓↓ 把你的 Apps Script 網址貼在這裡（只需填一次）↓↓↓
 // ================================================================
-// ⚙️ 設定區 — 所有需要修改的內容都在這裡
+// 設定區 — 所有需要修改的內容都在這裡
 // ================================================================
 
 // 【必填】Apps Script 網址
@@ -214,7 +214,7 @@ const CFG = {
   dates:         '6/11(一) — 6/15(五)',         // 活動日期
   time:          '19:00—21:00',                 // 活動時間
   location:      '醫學院 104 多功能實習教室',   // 活動地點
-  payDeadline:   '6/4(一) — 6/6(三)，12—13時 / 17—18時，逾期取消資格',  // 繳費期限
+  payDeadline:   '5/4(一) — 5/6(三)，12—13時 / 17—18時，逾期取消資格',  // 繳費期限
   payLocation:   '醫學院 104 多功能實習教室前',  // 繳費地點
   notice1:       '表單需填寫傳情人與被傳情人臉書連結，可先複製好。此份表單最多可傳給三位被傳情人。',
   notice2:       '選幾個部位就占幾個時段，每個時段 10 分鐘。每位被傳情人可各自選擇不同服務人員和時段。',
@@ -579,6 +579,8 @@ function renderBanner(){
   const b=document.getElementById('info-banner');
   if(!b)return;
   document.title=CFG.activityName+' · 傳情預約';
+  const be=document.getElementById('brand-en'); if(be) be.textContent=CFG.activityName;
+  const bz=document.getElementById('brand-zh'); if(bz) bz.textContent=CFG.subtitle;
   b.innerHTML=`
     <div style="font-size:12px;font-weight:500;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:12px;">成大物治週 · 軟組織放鬆 活動資訊</div>
     <div class="info-grid">
